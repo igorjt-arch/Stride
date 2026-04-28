@@ -806,15 +806,14 @@ input[type="range"] {
 </div>
 
 <!-- PROFILES SCREEN -->
-<div id="profiles-screen" class="profiles-screen">
+<div id="profiles-screen" class="profiles-screen" style="display:none">
   <div class="profiles-logo">Stride</div>
   <div class="profiles-sub">corrida com ciência</div>
   <div class="profiles-grid" id="profiles-grid"></div>
   <p style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace">Selecione um perfil para começar</p>
 </div>
 
-<div class="app" id="main-app" style="display:none">
-  <!-- SIDEBAR -->
+<div class="app" id="main-app" style="display:none">  <!-- SIDEBAR -->
   <aside class="sidebar">
     <div class="logo">
       <div class="logo-text">Stride</div>
@@ -4233,6 +4232,9 @@ function initFirebase() {
 renderSleepHistory();
 updateUsageDisplay();
 setTimeout(initLangIds, 100);
+
+// Show login screen immediately while Firebase loads
+document.getElementById('login-screen').style.display = 'flex';
 
 // Wait for Firebase to be ready
 if (window._fbReady) {
