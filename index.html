@@ -5,6 +5,29 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Stride — Corrida com Ciência</title>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<!-- Firebase SDK -->
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+  import { getAuth, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, GoogleAuthProvider, signOut, onAuthStateChanged, sendPasswordResetEmail } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+  import { getFirestore, doc, setDoc, getDoc, getDocs, collection, query, where, updateDoc, deleteDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCsCa33gHhHv7XJElGxaeAVHkOrzmmH7LU",
+    authDomain: "stride-app-d2a95.firebaseapp.com",
+    projectId: "stride-app-d2a95",
+    storageBucket: "stride-app-d2a95.firebasestorage.app",
+    messagingSenderId: "74849678423",
+    appId: "1:74849678423:web:8a612ad44ebb1859495f12"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  window._fbAuth = getAuth(app);
+  window._fbDb = getFirestore(app);
+  window._fbGoogleProvider = new GoogleAuthProvider();
+  window._fbFns = { signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail, doc, setDoc, getDoc, getDocs, collection, query, where, updateDoc, deleteDoc, serverTimestamp };
+  window._fbReady = true;
+  document.dispatchEvent(new Event('firebase-ready'));
+</script>
 <style>
 :root {
   --bg: #f0f4f8;
@@ -667,7 +690,121 @@ input[type="range"] {
 </head>
 <body>
 
-<!-- PROFILE SELECTOR SCREEN -->
+<!-- LOGIN SCREEN -->
+<div id="login-screen" style="display:none;position:fixed;inset:0;background:#f0f4f8;z-index:2000;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px">
+  <div style="width:100%;max-width:420px">
+    <div style="text-align:center;margin-bottom:40px">
+      <div style="font-family:'DM Serif Display',serif;font-size:40px;color:#1a2332;letter-spacing:-1px">Stride</div>
+      <div style="font-size:13px;color:#8a9ab0;font-family:'DM Mono',monospace;margin-top:4px">corrida com ciência</div>
+    </div>
+
+    <div id="login-card" style="background:#fff;border-radius:16px;padding:32px;box-shadow:0 4px 24px rgba(0,0,0,0.08)">
+      <div id="login-tabs" style="display:flex;gap:0;margin-bottom:24px;border-bottom:2px solid #e2e8f0">
+        <button id="tab-login" onclick="showLoginTab('login')" style="flex:1;padding:10px;border:none;background:none;font-size:14px;font-weight:600;color:#16a34a;border-bottom:2px solid #16a34a;margin-bottom:-2px;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif">Entrar</button>
+        <button id="tab-register" onclick="showLoginTab('register')" style="flex:1;padding:10px;border:none;background:none;font-size:14px;font-weight:500;color:#8a9ab0;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif">Criar conta</button>
+      </div>
+
+      <!-- LOGIN FORM -->
+      <div id="form-login">
+        <div style="margin-bottom:14px">
+          <label style="font-size:12px;color:#4a5568;font-family:'DM Mono',monospace;display:block;margin-bottom:6px">E-MAIL</label>
+          <input type="email" id="login-email" placeholder="seu@email.com" style="width:100%;padding:11px 14px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;outline:none;font-family:'Plus Jakarta Sans',sans-serif">
+        </div>
+        <div style="margin-bottom:8px">
+          <label style="font-size:12px;color:#4a5568;font-family:'DM Mono',monospace;display:block;margin-bottom:6px">SENHA</label>
+          <input type="password" id="login-password" placeholder="••••••••" style="width:100%;padding:11px 14px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;outline:none;font-family:'Plus Jakarta Sans',sans-serif" onkeydown="if(event.key==='Enter')doLogin()">
+        </div>
+        <div style="text-align:right;margin-bottom:20px">
+          <button onclick="doResetPassword()" style="background:none;border:none;font-size:12px;color:#16a34a;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif">Esqueci a senha</button>
+        </div>
+        <button onclick="doLogin()" id="btn-login" style="width:100%;padding:12px;background:#16a34a;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;margin-bottom:14px">Entrar</button>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+          <div style="flex:1;height:1px;background:#e2e8f0"></div>
+          <span style="font-size:12px;color:#8a9ab0">ou</span>
+          <div style="flex:1;height:1px;background:#e2e8f0"></div>
+        </div>
+        <button onclick="doGoogleLogin()" style="width:100%;padding:11px;background:#fff;color:#1a2332;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px">
+          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" height="18">
+          Continuar com Google
+        </button>
+      </div>
+
+      <!-- REGISTER FORM -->
+      <div id="form-register" style="display:none">
+        <div style="margin-bottom:14px">
+          <label style="font-size:12px;color:#4a5568;font-family:'DM Mono',monospace;display:block;margin-bottom:6px">NOME</label>
+          <input type="text" id="reg-name" placeholder="Seu nome" style="width:100%;padding:11px 14px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;outline:none;font-family:'Plus Jakarta Sans',sans-serif">
+        </div>
+        <div style="margin-bottom:14px">
+          <label style="font-size:12px;color:#4a5568;font-family:'DM Mono',monospace;display:block;margin-bottom:6px">E-MAIL</label>
+          <input type="email" id="reg-email" placeholder="seu@email.com" style="width:100%;padding:11px 14px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;outline:none;font-family:'Plus Jakarta Sans',sans-serif">
+        </div>
+        <div style="margin-bottom:20px">
+          <label style="font-size:12px;color:#4a5568;font-family:'DM Mono',monospace;display:block;margin-bottom:6px">SENHA</label>
+          <input type="password" id="reg-password" placeholder="Mínimo 6 caracteres" style="width:100%;padding:11px 14px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;outline:none;font-family:'Plus Jakarta Sans',sans-serif" onkeydown="if(event.key==='Enter')doRegister()">
+        </div>
+        <button onclick="doRegister()" style="width:100%;padding:12px;background:#16a34a;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;margin-bottom:14px">Criar conta</button>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+          <div style="flex:1;height:1px;background:#e2e8f0"></div>
+          <span style="font-size:12px;color:#8a9ab0">ou</span>
+          <div style="flex:1;height:1px;background:#e2e8f0"></div>
+        </div>
+        <button onclick="doGoogleLogin()" style="width:100%;padding:11px;background:#fff;color:#1a2332;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px">
+          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" height="18">
+          Continuar com Google
+        </button>
+      </div>
+
+      <div id="login-error" style="display:none;margin-top:14px;padding:10px 14px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;font-size:13px;color:#dc2626;font-family:'Plus Jakarta Sans',sans-serif"></div>
+      <div id="login-success" style="display:none;margin-top:14px;padding:10px 14px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;font-size:13px;color:#16a34a;font-family:'Plus Jakarta Sans',sans-serif"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN PANEL -->
+<div id="admin-screen" style="display:none;position:fixed;inset:0;background:#f0f4f8;z-index:1500;overflow-y:auto">
+  <div style="background:#1a2332;padding:16px 28px;display:flex;align-items:center;justify-content:space-between">
+    <div style="font-family:'DM Serif Display',serif;font-size:22px;color:#fff">Stride <span style="font-size:13px;color:rgba(255,255,255,0.4);font-family:'DM Mono',monospace">Admin</span></div>
+    <div style="display:flex;align-items:center;gap:12px">
+      <span id="admin-user-name" style="font-size:13px;color:rgba(255,255,255,0.6)"></span>
+      <button onclick="doLogout()" style="padding:7px 14px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:6px;color:#fff;font-size:12px;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif">Sair</button>
+    </div>
+  </div>
+  <div style="padding:28px;max-width:1100px;margin:0 auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
+      <h2 style="font-family:'DM Serif Display',serif;font-size:26px;color:#1a2332">Atletas</h2>
+      <button onclick="showCreateAthleteModal()" style="padding:10px 20px;background:#16a34a;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif">+ Adicionar atleta</button>
+    </div>
+    <div id="admin-stats" style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px"></div>
+    <div id="admin-athletes-list"></div>
+  </div>
+</div>
+
+<!-- CREATE ATHLETE MODAL -->
+<div id="create-athlete-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:2000;display:none;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:16px;padding:32px;width:100%;max-width:440px;margin:24px">
+    <h3 style="font-family:'DM Serif Display',serif;font-size:22px;color:#1a2332;margin-bottom:20px">Novo atleta</h3>
+    <div style="margin-bottom:14px">
+      <label style="font-size:12px;color:#4a5568;font-family:'DM Mono',monospace;display:block;margin-bottom:6px">NOME</label>
+      <input type="text" id="new-athlete-name" placeholder="Nome do atleta" style="width:100%;padding:11px 14px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;outline:none">
+    </div>
+    <div style="margin-bottom:14px">
+      <label style="font-size:12px;color:#4a5568;font-family:'DM Mono',monospace;display:block;margin-bottom:6px">E-MAIL</label>
+      <input type="email" id="new-athlete-email" placeholder="email@atleta.com" style="width:100%;padding:11px 14px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;outline:none">
+    </div>
+    <div style="margin-bottom:24px">
+      <label style="font-size:12px;color:#4a5568;font-family:'DM Mono',monospace;display:block;margin-bottom:6px">SENHA INICIAL</label>
+      <input type="text" id="new-athlete-password" placeholder="Mínimo 6 caracteres" style="width:100%;padding:11px 14px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;outline:none">
+    </div>
+    <div style="display:flex;gap:10px">
+      <button onclick="closeCreateAthleteModal()" style="flex:1;padding:11px;background:#f1f5f9;color:#4a5568;border:none;border-radius:8px;font-size:14px;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif">Cancelar</button>
+      <button onclick="doCreateAthlete()" style="flex:1;padding:11px;background:#16a34a;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif">Criar atleta</button>
+    </div>
+    <div id="create-athlete-error" style="display:none;margin-top:12px;padding:10px;background:#fef2f2;border-radius:8px;font-size:13px;color:#dc2626"></div>
+  </div>
+</div>
+
+<!-- PROFILES SCREEN -->
 <div id="profiles-screen" class="profiles-screen">
   <div class="profiles-logo">Stride</div>
   <div class="profiles-sub">corrida com ciência</div>
@@ -732,16 +869,19 @@ input[type="range"] {
       <div class="readiness-score amber" id="readiness-num">--</div>
       <div class="readiness-desc" id="readiness-desc">Complete o perfil</div>
     </div>
-
     <div class="readiness-card" style="margin-top:8px" id="usage-card">
       <div class="readiness-label">Consultas hoje</div>
       <div style="display:flex;align-items:baseline;gap:4px">
         <div class="readiness-score" id="usage-num" style="font-size:22px">0</div>
-        <div style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace">/ 20</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.3);font-family:'DM Mono',monospace">/ 20</div>
       </div>
-      <div style="height:3px;background:var(--surface);border-radius:2px;margin-top:6px;overflow:hidden">
-        <div id="usage-bar" style="height:100%;background:var(--green);border-radius:2px;transition:width 0.3s;width:0%"></div>
+      <div style="height:3px;background:rgba(255,255,255,0.1);border-radius:2px;margin-top:6px;overflow:hidden">
+        <div id="usage-bar" style="height:100%;background:#4ade80;border-radius:2px;transition:width 0.3s;width:0%"></div>
       </div>
+    </div>
+    <div style="padding:12px;margin-top:8px">
+      <div id="sidebar-user-info" style="font-size:11px;color:rgba(255,255,255,0.4);font-family:'DM Mono',monospace;margin-bottom:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div>
+      <button onclick="doLogout()" style="width:100%;padding:7px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:6px;color:rgba(255,255,255,0.5);font-size:12px;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;text-align:center">Sair da conta</button>
     </div>
   </aside>
 
@@ -3621,10 +3761,9 @@ function updateSidebarProfile() {
   document.getElementById('sidebar-profile-name').textContent = state.perfil.nome || 'Perfil';
 }
 
-// Auto-save every 30 seconds and on key actions
+// Auto-save every 30 seconds
 setInterval(saveCurrentProfile, 30000);
 
-// Patch generateInitialPlan to save after creating plan
 const _origGenerate = window.generateInitialPlan;
 
 function updateUsageDisplay() {
@@ -3633,9 +3772,348 @@ function updateUsageDisplay() {
   const bar = document.getElementById('usage-bar');
   if (!el) return;
   el.textContent = used;
-  el.style.color = used >= 18 ? 'var(--red)' : used >= 14 ? 'var(--amber)' : 'var(--green)';
+  el.style.color = used >= 18 ? '#dc2626' : used >= 14 ? '#d97706' : '#4ade80';
   if (bar) bar.style.width = Math.min(100, (used / DAILY_LIMIT) * 100) + '%';
-  if (bar) bar.style.background = used >= 18 ? 'var(--red)' : used >= 14 ? 'var(--amber)' : 'var(--green)';
+  if (bar) bar.style.background = used >= 18 ? '#dc2626' : used >= 14 ? '#d97706' : '#4ade80';
+}
+
+// ============================================================
+// FIREBASE AUTH & FIRESTORE
+// ============================================================
+let currentUser = null;
+let isAdmin = false;
+
+function showLoginScreen() {
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('main-app').style.display = 'none';
+  document.getElementById('profiles-screen').style.display = 'none';
+  document.getElementById('admin-screen').style.display = 'none';
+}
+
+function hideLoginScreen() {
+  document.getElementById('login-screen').style.display = 'none';
+}
+
+function showLoginTab(tab) {
+  document.getElementById('form-login').style.display = tab === 'login' ? 'block' : 'none';
+  document.getElementById('form-register').style.display = tab === 'register' ? 'block' : 'none';
+  document.getElementById('tab-login').style.color = tab === 'login' ? '#16a34a' : '#8a9ab0';
+  document.getElementById('tab-login').style.borderBottom = tab === 'login' ? '2px solid #16a34a' : '2px solid transparent';
+  document.getElementById('tab-register').style.color = tab === 'register' ? '#16a34a' : '#8a9ab0';
+  document.getElementById('tab-register').style.borderBottom = tab === 'register' ? '2px solid #16a34a' : '2px solid transparent';
+}
+
+function showLoginError(msg) {
+  const el = document.getElementById('login-error');
+  el.textContent = msg; el.style.display = 'block';
+  document.getElementById('login-success').style.display = 'none';
+}
+
+function showLoginSuccess(msg) {
+  const el = document.getElementById('login-success');
+  el.textContent = msg; el.style.display = 'block';
+  document.getElementById('login-error').style.display = 'none';
+}
+
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  if (!email || !password) { showLoginError('Preencha email e senha.'); return; }
+  const btn = document.getElementById('btn-login');
+  btn.textContent = 'Entrando...'; btn.disabled = true;
+  try {
+    const { signInWithEmailAndPassword } = window._fbFns;
+    await signInWithEmailAndPassword(window._fbAuth, email, password);
+  } catch(e) {
+    const msgs = { 'auth/user-not-found':'Usuário não encontrado.','auth/wrong-password':'Senha incorreta.','auth/invalid-email':'Email inválido.','auth/too-many-requests':'Muitas tentativas. Tente mais tarde.' };
+    showLoginError(msgs[e.code] || e.message);
+    btn.textContent = 'Entrar'; btn.disabled = false;
+  }
+}
+
+async function doGoogleLogin() {
+  try {
+    const { signInWithPopup } = window._fbFns;
+    await signInWithPopup(window._fbAuth, window._fbGoogleProvider);
+  } catch(e) {
+    if (e.code !== 'auth/popup-closed-by-user') showLoginError('Erro ao entrar com Google: ' + e.message);
+  }
+}
+
+async function doRegister() {
+  const name = document.getElementById('reg-name').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+  const password = document.getElementById('reg-password').value;
+  if (!name || !email || !password) { showLoginError('Preencha todos os campos.'); return; }
+  if (password.length < 6) { showLoginError('Senha deve ter no mínimo 6 caracteres.'); return; }
+  try {
+    const { createUserWithEmailAndPassword, doc, setDoc } = window._fbFns;
+    const cred = await createUserWithEmailAndPassword(window._fbAuth, email, password);
+    await setDoc(doc(window._fbDb, 'users', cred.user.uid), {
+      email, name, role: 'athlete', createdAt: new Date().toISOString()
+    });
+  } catch(e) {
+    const msgs = { 'auth/email-already-in-use':'Este email já está cadastrado.','auth/invalid-email':'Email inválido.','auth/weak-password':'Senha muito fraca.' };
+    showLoginError(msgs[e.code] || e.message);
+  }
+}
+
+async function doResetPassword() {
+  const email = document.getElementById('login-email').value.trim();
+  if (!email) { showLoginError('Digite seu email primeiro.'); return; }
+  try {
+    const { sendPasswordResetEmail } = window._fbFns;
+    await sendPasswordResetEmail(window._fbAuth, email);
+    showLoginSuccess('Email de redefinição enviado! Verifique sua caixa de entrada.');
+  } catch(e) {
+    showLoginError('Erro ao enviar email: ' + e.message);
+  }
+}
+
+async function doLogout() {
+  const { signOut } = window._fbFns;
+  await signOut(window._fbAuth);
+  currentUser = null; isAdmin = false;
+  state.perfil = null; state.plano = null; state.semana = [];
+  showLoginScreen();
+}
+
+// Load user data from Firestore
+async function loadUserData(uid) {
+  const { doc, getDoc } = window._fbFns;
+  const snap = await getDoc(doc(window._fbDb, 'users', uid));
+  if (snap.exists()) return snap.data();
+  return null;
+}
+
+// Save user data to Firestore
+async function saveUserDataToFirestore(uid, data) {
+  const { doc, setDoc } = window._fbFns;
+  await setDoc(doc(window._fbDb, 'users', uid), data, { merge: true });
+}
+
+// Override saveCurrentProfile to use Firestore
+const _origSaveProfile = saveCurrentProfile;
+function saveCurrentProfile() {
+  if (!currentUser || !state.perfil) return;
+  const data = {
+    perfil: state.perfil, plano: state.plano, semana: state.semana,
+    sonoHistory: state.sonoHistory, updatedAt: new Date().toISOString()
+  };
+  saveUserDataToFirestore(currentUser.uid, data).catch(e => console.warn('Save error:', e));
+}
+
+// ── ADMIN PANEL ──────────────────────────────────────────────
+async function showAdminPanel(user) {
+  document.getElementById('admin-screen').style.display = 'block';
+  document.getElementById('main-app').style.display = 'none';
+  document.getElementById('profiles-screen').style.display = 'none';
+  document.getElementById('admin-user-name').textContent = user.email;
+  await loadAdminAthletes();
+}
+
+async function loadAdminAthletes() {
+  const { collection, getDocs } = window._fbFns;
+  const snap = await getDocs(collection(window._fbDb, 'users'));
+  const users = [];
+  snap.forEach(d => users.push({ id: d.id, ...d.data() }));
+  const athletes = users.filter(u => u.role !== 'admin');
+  const admins = users.filter(u => u.role === 'admin');
+
+  document.getElementById('admin-stats').innerHTML = `
+    <div style="background:#fff;border-radius:12px;padding:18px 20px;box-shadow:0 1px 3px rgba(0,0,0,0.05)">
+      <div style="font-size:11px;color:#8a9ab0;font-family:'DM Mono',monospace;text-transform:uppercase;margin-bottom:8px">Total atletas</div>
+      <div style="font-size:32px;font-family:'DM Serif Display',serif;color:#1a2332">${athletes.length}</div>
+    </div>
+    <div style="background:#fff;border-radius:12px;padding:18px 20px;box-shadow:0 1px 3px rgba(0,0,0,0.05)">
+      <div style="font-size:11px;color:#8a9ab0;font-family:'DM Mono',monospace;text-transform:uppercase;margin-bottom:8px">Com plano ativo</div>
+      <div style="font-size:32px;font-family:'DM Serif Display',serif;color:#16a34a">${athletes.filter(u => u.plano).length}</div>
+    </div>
+    <div style="background:#fff;border-radius:12px;padding:18px 20px;box-shadow:0 1px 3px rgba(0,0,0,0.05)">
+      <div style="font-size:11px;color:#8a9ab0;font-family:'DM Mono',monospace;text-transform:uppercase;margin-bottom:8px">Admins</div>
+      <div style="font-size:32px;font-family:'DM Serif Display',serif;color:#2563eb">${admins.length}</div>
+    </div>
+    <div style="background:#fff;border-radius:12px;padding:18px 20px;box-shadow:0 1px 3px rgba(0,0,0,0.05)">
+      <div style="font-size:11px;color:#8a9ab0;font-family:'DM Mono',monospace;text-transform:uppercase;margin-bottom:8px">Total usuários</div>
+      <div style="font-size:32px;font-family:'DM Serif Display',serif;color:#1a2332">${users.length}</div>
+    </div>
+  `;
+
+  document.getElementById('admin-athletes-list').innerHTML = users.length ? `
+    <div style="background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.05)">
+      <table style="width:100%;border-collapse:collapse">
+        <thead>
+          <tr style="background:#f8fafc;border-bottom:1px solid #e2e8f0">
+            <th style="padding:12px 16px;text-align:left;font-size:11px;font-family:'DM Mono',monospace;color:#8a9ab0;text-transform:uppercase;font-weight:500">Atleta</th>
+            <th style="padding:12px 16px;text-align:left;font-size:11px;font-family:'DM Mono',monospace;color:#8a9ab0;text-transform:uppercase;font-weight:500">Email</th>
+            <th style="padding:12px 16px;text-align:left;font-size:11px;font-family:'DM Mono',monospace;color:#8a9ab0;text-transform:uppercase;font-weight:500">Perfil</th>
+            <th style="padding:12px 16px;text-align:left;font-size:11px;font-family:'DM Mono',monospace;color:#8a9ab0;text-transform:uppercase;font-weight:500">ACWR</th>
+            <th style="padding:12px 16px;text-align:left;font-size:11px;font-family:'DM Mono',monospace;color:#8a9ab0;text-transform:uppercase;font-weight:500">Função</th>
+            <th style="padding:12px 16px;text-align:left;font-size:11px;font-family:'DM Mono',monospace;color:#8a9ab0;text-transform:uppercase;font-weight:500">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${users.map(u => `
+            <tr style="border-bottom:1px solid #f1f5f9" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background=''">
+              <td style="padding:14px 16px;font-size:14px;font-weight:500;color:#1a2332">${u.perfil?.nome || u.name || '—'}</td>
+              <td style="padding:14px 16px;font-size:13px;color:#4a5568">${u.email || '—'}</td>
+              <td style="padding:14px 16px;font-size:13px;color:#4a5568">${u.perfil?.objetivo || '—'} · ${u.perfil?.base || '—'}</td>
+              <td style="padding:14px 16px">
+                ${u.plano?.acwr_estimado ? `<span style="font-size:13px;font-weight:600;color:${parseFloat(u.plano.acwr_estimado)>1.3?'#dc2626':parseFloat(u.plano.acwr_estimado)<0.8?'#d97706':'#16a34a'}">${u.plano.acwr_estimado}</span>` : '<span style="color:#8a9ab0;font-size:13px">—</span>'}
+              </td>
+              <td style="padding:14px 16px">
+                <span style="font-size:11px;padding:3px 8px;border-radius:20px;font-weight:500;background:${u.role==='admin'?'#eff6ff':'#f0fdf4'};color:${u.role==='admin'?'#2563eb':'#16a34a'}">${u.role === 'admin' ? 'Admin' : 'Atleta'}</span>
+              </td>
+              <td style="padding:14px 16px">
+                <div style="display:flex;gap:6px">
+                  <button onclick="adminViewAthlete('${u.id}')" style="padding:5px 10px;background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;border-radius:6px;font-size:12px;cursor:pointer">Ver</button>
+                  <button onclick="adminToggleRole('${u.id}','${u.role}')" style="padding:5px 10px;background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;border-radius:6px;font-size:12px;cursor:pointer">${u.role==='admin'?'→ Atleta':'→ Admin'}</button>
+                  <button onclick="adminDeleteUser('${u.id}','${u.perfil?.nome||u.email}')" style="padding:5px 10px;background:#fef2f2;color:#dc2626;border:1px solid #fecaca;border-radius:6px;font-size:12px;cursor:pointer">Remover</button>
+                </div>
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+  ` : '<div style="text-align:center;padding:40px;color:#8a9ab0">Nenhum usuário ainda.</div>';
+}
+
+async function adminViewAthlete(uid) {
+  const { doc, getDoc } = window._fbFns;
+  const snap = await getDoc(doc(window._fbDb, 'users', uid));
+  if (!snap.exists()) return;
+  const data = snap.data();
+  // Load athlete data into state and open main app
+  state.perfil = data.perfil || null;
+  state.plano = data.plano || null;
+  state.semana = data.semana || [];
+  state.sonoHistory = data.sonoHistory || [];
+  document.getElementById('admin-screen').style.display = 'none';
+  document.getElementById('main-app').style.display = 'flex';
+  if (state.perfil) { calcularReadiness(); atualizarDashboard(); updateSidebarProfile(); }
+  navigate('dashboard');
+  // Add back button
+  const backBtn = document.createElement('button');
+  backBtn.textContent = '← Voltar ao painel admin';
+  backBtn.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:999;padding:10px 18px;background:#1a2332;color:#fff;border:none;border-radius:8px;font-size:13px;cursor:pointer;font-family:"Plus Jakarta Sans",sans-serif;box-shadow:0 4px 12px rgba(0,0,0,0.2)';
+  backBtn.onclick = () => { backBtn.remove(); showAdminPanel(currentUser); };
+  document.body.appendChild(backBtn);
+}
+
+async function adminToggleRole(uid, currentRole) {
+  const newRole = currentRole === 'admin' ? 'athlete' : 'admin';
+  if (!confirm(`Trocar função para "${newRole}"?`)) return;
+  await saveUserDataToFirestore(uid, { role: newRole });
+  await loadAdminAthletes();
+}
+
+async function adminDeleteUser(uid, name) {
+  if (!confirm(`Remover "${name}"? Os dados serão apagados.`)) return;
+  const { doc, deleteDoc } = window._fbFns;
+  await deleteDoc(doc(window._fbDb, 'users', uid));
+  await loadAdminAthletes();
+}
+
+function showCreateAthleteModal() {
+  document.getElementById('create-athlete-modal').style.display = 'flex';
+}
+
+function closeCreateAthleteModal() {
+  document.getElementById('create-athlete-modal').style.display = 'none';
+  document.getElementById('create-athlete-error').style.display = 'none';
+}
+
+async function doCreateAthlete() {
+  const name = document.getElementById('new-athlete-name').value.trim();
+  const email = document.getElementById('new-athlete-email').value.trim();
+  const password = document.getElementById('new-athlete-password').value;
+  if (!name || !email || !password) {
+    document.getElementById('create-athlete-error').textContent = 'Preencha todos os campos.';
+    document.getElementById('create-athlete-error').style.display = 'block';
+    return;
+  }
+
+  // Use Vercel function to create user (Firebase Admin SDK)
+  try {
+    const res = await fetch('/api/create-user', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, password, adminUid: currentUser.uid })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Erro ao criar usuário');
+    closeCreateAthleteModal();
+    await loadAdminAthletes();
+    alert(`Atleta "${name}" criado com sucesso!`);
+  } catch(e) {
+    document.getElementById('create-athlete-error').textContent = e.message;
+    document.getElementById('create-athlete-error').style.display = 'block';
+  }
+}
+
+// ── FIREBASE AUTH STATE LISTENER ─────────────────────────────
+function initFirebase() {
+  const { onAuthStateChanged, doc, getDoc, setDoc } = window._fbFns;
+  onAuthStateChanged(window._fbAuth, async (user) => {
+    if (!user) {
+      showLoginScreen();
+      return;
+    }
+    currentUser = user;
+
+    // Update sidebar user info
+    const userInfoEl = document.getElementById('sidebar-user-info');
+    if (userInfoEl) userInfoEl.textContent = user.email;
+
+    // Load user doc from Firestore
+    let userData = await loadUserData(user.uid);
+
+    // First login — create user doc
+    if (!userData) {
+      userData = {
+        email: user.email,
+        name: user.displayName || user.email.split('@')[0],
+        role: 'athlete',
+        createdAt: new Date().toISOString()
+      };
+      await setDoc(doc(window._fbDb, 'users', user.uid), userData);
+    }
+
+    isAdmin = userData.role === 'admin';
+
+    if (isAdmin) {
+      hideLoginScreen();
+      await showAdminPanel(user);
+      return;
+    }
+
+    // Regular athlete — load their data
+    hideLoginScreen();
+    if (userData.perfil) {
+      state.perfil = userData.perfil;
+      state.plano = userData.plano || null;
+      state.semana = userData.semana || [];
+      state.sonoHistory = userData.sonoHistory || [];
+      calcularReadiness();
+      atualizarDashboard();
+      updateSidebarProfile();
+      document.getElementById('profiles-screen').style.display = 'none';
+      document.getElementById('main-app').style.display = 'flex';
+      navigate('dashboard');
+    } else {
+      // No profile yet — go to onboarding
+      document.getElementById('profiles-screen').style.display = 'none';
+      document.getElementById('main-app').style.display = 'flex';
+      navigate('onboarding');
+    }
+
+    // Handle Strava callback
+    const _params = new URLSearchParams(window.location.search);
+    if (_params.get('code') || _params.get('error')) {
+      handleStravaCallback();
+    }
+  });
 }
 
 // ============================================================
@@ -3645,58 +4123,13 @@ renderSleepHistory();
 updateUsageDisplay();
 setTimeout(initLangIds, 100);
 
-// Migrate old single-profile localStorage to new multi-profile format
-function migrateOldData() {
-  const oldPerfil = localStorage.getItem('stride_perfil');
-  const oldPlano = localStorage.getItem('stride_plano');
-  if (!oldPerfil) return false;
-  try {
-    const perfil = JSON.parse(oldPerfil);
-    const plano = oldPlano ? JSON.parse(oldPlano) : null;
-    const id = DB.newId();
-    const profiles = DB.getProfiles();
-    if (profiles.length > 0) return false; // already migrated
-    profiles.push({ id, nome: perfil.nome || 'Atleta', objetivo: perfil.objetivo || '', updatedAt: new Date().toISOString() });
-    DB.saveProfiles(profiles);
-    DB.saveProfileData(id, { perfil, plano, semana: plano?.semana || [], sonoHistory: [], updatedAt: new Date().toISOString() });
-    // Clean up old keys
-    localStorage.removeItem('stride_perfil');
-    localStorage.removeItem('stride_plano');
-    return true;
-  } catch(e) { return false; }
-}
-
-migrateOldData();
-
-// Check for Strava OAuth callback
-const _initParams = new URLSearchParams(window.location.search);
-if (_initParams.get('code') || _initParams.get('error')) {
-  const _cbId = DB.getCurrentId();
-  if (_cbId) loadProfile(_cbId);
-  document.getElementById('profiles-screen').style.display = 'none';
-  document.getElementById('main-app').style.display = 'flex';
-  if (state.perfil) { updateSidebarProfile(); atualizarDashboard(); }
-  handleStravaCallback();
+// Wait for Firebase to be ready
+if (window._fbReady) {
+  initFirebase();
 } else {
-  const profiles = DB.getProfiles();
-  if (profiles.length === 1) {
-    // Only one profile — auto-select
-    selectProfile(profiles[0].id);
-  } else {
-    // Zero or multiple — renderProfilesScreen handles both cases
-    renderProfilesScreen();
-  }
+  document.addEventListener('firebase-ready', initFirebase);
 }
-
-
 
 </script>
 </body>
 </html>
-<!-- build 1777380723999330475 -->
-<!-- fix 1777380939 -->
-<!-- v1777381307 -->
-<!-- v1777381548 -->
-<!-- v1777381771 -->
-<!-- v1777382520 -->
-<!-- vercel-v1777383193 -->

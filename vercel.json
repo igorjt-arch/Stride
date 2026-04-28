@@ -2,10 +2,12 @@
   "version": 2,
   "builds": [
     { "src": "index.html", "use": "@vercel/static" },
-    { "src": "api/claude.js", "use": "@vercel/node" }
+    { "src": "api/claude.js", "use": "@vercel/node" },
+    { "src": "api/create-user.js", "use": "@vercel/node" }
   ],
   "routes": [
     { "src": "/api/claude", "dest": "/api/claude.js" },
+    { "src": "/api/create-user", "dest": "/api/create-user.js" },
     { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
