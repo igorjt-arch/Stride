@@ -2548,16 +2548,21 @@ function renderStravaConnected() {
   const acts = STRAVA.activities;
   const athlete = STRAVA.athlete;
 
+  // Hide loading indicator immediately
+  const ld = document.getElementById('strava-loading');
+  if (ld) ld.style.display = 'none';
+
   // Summary stats
   const now = Date.now();
   const last7 = acts.filter(a => (now - new Date(a.start_date).getTime()) < 7*24*60*60*1000);
   const last28 = acts.filter(a => (now - new Date(a.start_date).getTime()) < 28*24*60*60*1000);
   const kmLast7 = last7.reduce((s,a) => s + a.distance/1000, 0);
   const kmLast28 = last28.reduce((s,a) => s + a.distance/1000, 0);
-  const avgPace = acts.length ? acts.slice(0,10).reduce((s,a) => {
-    const pace = a.moving_time / (a.distance/1000);
-    return s + pace;
-  }, 0) / Math.min(acts.length,10) : 0;
+
+  // Find date range of imported activities
+  const dates = acts.map(a => new Date(a.start_date)).sort((a,b) => a-b);
+  const oldestDate = dates.length ? dates[0].toLocaleDateString('pt-BR', {day:'2-digit',month:'short',year:'numeric'}) : '—';
+  const newestDate = dates.length ? dates[dates.length-1].toLocaleDateString('pt-BR', {day:'2-digit',month:'short'}) : '—';
 
   // ACWR real
   const acuteLoad = kmLast7;
@@ -2589,12 +2594,12 @@ function renderStravaConnected() {
     <div class="stat-card">
       <div class="stat-label">Volume 7 dias</div>
       <div class="stat-value">${Math.round(kmLast7)}<span class="stat-unit">km</span></div>
-      <div class="stat-delta good">${last7.length} corridas</div>
+      <div class="stat-delta good">${last7.length} corrida${last7.length !== 1 ? 's' : ''}</div>
     </div>
     <div class="stat-card">
       <div class="stat-label">Volume 28 dias</div>
       <div class="stat-value">${Math.round(kmLast28)}<span class="stat-unit">km</span></div>
-      <div class="stat-delta good">${last28.length} corridas</div>
+      <div class="stat-delta good">${last28.length} corrida${last28.length !== 1 ? 's' : ''}</div>
     </div>
     <div class="stat-card">
       <div class="stat-label">ACWR real</div>
@@ -2603,16 +2608,27 @@ function renderStravaConnected() {
     </div>
   `;
 
-  // Activity list (last 8)
-  const recent = acts.slice(0, 8);
-  document.getElementById('strava-activities-list').innerHTML = recent.length ? recent.map(a => {
+  // Data transparency banner
+  const transpHtml = acts.length > 0 ? `
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--text2);line-height:1.7">
+      <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:4px">Dados importados</div>
+      ✓ <strong style="color:var(--text)">${acts.length} corridas</strong> importadas
+      &nbsp;·&nbsp; Período: <strong style="color:var(--text)">${oldestDate} → ${newestDate}</strong>
+      &nbsp;·&nbsp; ${last28.length} corridas nos últimos 28 dias usadas para calcular ACWR
+      ${acts.length < 20 ? `<br>⚠ Menos de 20 corridas — histórico pode ser insuficiente para ACWR preciso (mínimo recomendado: 4 semanas completas)` : ''}
+    </div>
+  ` : `<div style="color:var(--amber);font-size:12px;margin-bottom:12px">⚠ Nenhuma corrida encontrada. Verifique se seu perfil Strava é público.</div>`;
+
+  // Activity list — show all imported
+  const listHtml = acts.length ? acts.map(a => {
     const date = new Date(a.start_date).toLocaleDateString('pt-BR', {day:'2-digit',month:'short'});
     const km = (a.distance/1000).toFixed(1);
     const pace = a.average_speed > 0 ? formatPace(a.average_speed) : '—';
     const hr = a.has_heartrate ? a.average_heartrate + ' bpm' : '—';
-    return `<div class="activity-row">
+    const isLast28 = (now - new Date(a.start_date).getTime()) < 28*24*60*60*1000;
+    return `<div class="activity-row" style="${isLast28 ? '' : 'opacity:0.5'}">
       <div>
-        <div class="activity-name">${a.name}</div>
+        <div class="activity-name">${a.name} ${isLast28 ? '' : '<span style="font-size:10px;color:var(--text3)">(fora dos 28 dias)</span>'}</div>
         <div class="activity-meta">${date} · ${a.type}</div>
       </div>
       <div class="activity-stats">
@@ -2621,7 +2637,9 @@ function renderStravaConnected() {
         <div><div class="activity-stat-val">${hr}</div><div class="activity-stat-lbl">FC média</div></div>
       </div>
     </div>`;
-  }).join('') : '<div class="empty"><div class="empty-text">Nenhuma corrida encontrada nos últimos 30 dias.</div></div>';
+  }).join('') : '';
+
+  document.getElementById('strava-activities-list').innerHTML = transpHtml + listHtml || '<div class="empty"><div class="empty-text">Nenhuma corrida encontrada.</div></div>';
 }
 
 function formatPace(metersPerSec) {
