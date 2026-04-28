@@ -4103,16 +4103,16 @@ function initFirebase() {
     const userInfoEl = document.getElementById('sidebar-user-info');
     if (userInfoEl) userInfoEl.textContent = user.email;
 
-    // Load user doc from Firestore with timeout
+    // Try to load Firestore data but don't block on it
     let userData = null;
     try {
-      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000));
+      const timeoutPromise = new Promise(resolve => setTimeout(() => resolve(null), 4000));
       userData = await Promise.race([loadUserData(user.uid), timeoutPromise]);
     } catch(e) {
-      console.warn('Could not load user data:', e.message);
+      console.warn('Firestore load error:', e.message);
     }
 
-    // First login or missing doc — create user doc
+    // If no doc exists, create one
     if (!userData) {
       userData = {
         email: user.email,
@@ -4120,25 +4120,21 @@ function initFirebase() {
         role: 'athlete',
         createdAt: new Date().toISOString()
       };
-      try {
-        const { doc, setDoc } = window._fbFns;
-        await setDoc(doc(window._fbDb, 'users', user.uid), userData);
-      } catch(e) {
-        console.warn('Could not create user doc:', e.message);
-      }
+      // Save in background, don't await
+      saveUserDataToFirestore(user.uid, userData).catch(e => console.warn('Save error:', e));
     }
 
-    // Check if this is the manually created admin
     isAdmin = userData?.role === 'admin';
 
+    // Navigate immediately — don't wait for Firestore
+    hideLoginScreen();
+
     if (isAdmin) {
-      hideLoginScreen();
       await showAdminPanel(user);
       return;
     }
 
-    // Regular athlete — load their data
-    hideLoginScreen();
+    // Load athlete profile
     if (userData.perfil) {
       state.perfil = userData.perfil;
       state.plano = userData.plano || null;
@@ -4147,15 +4143,11 @@ function initFirebase() {
       calcularReadiness();
       atualizarDashboard();
       updateSidebarProfile();
-      document.getElementById('profiles-screen').style.display = 'none';
-      document.getElementById('main-app').style.display = 'flex';
-      navigate('dashboard');
-    } else {
-      // No profile yet — go to onboarding
-      document.getElementById('profiles-screen').style.display = 'none';
-      document.getElementById('main-app').style.display = 'flex';
-      navigate('onboarding');
     }
+
+    document.getElementById('profiles-screen').style.display = 'none';
+    document.getElementById('main-app').style.display = 'flex';
+    navigate(userData.perfil ? 'dashboard' : 'onboarding');
 
     // Handle Strava callback
     const _params = new URLSearchParams(window.location.search);
