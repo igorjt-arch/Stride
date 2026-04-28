@@ -2624,7 +2624,7 @@ function connectStrava() {
   const redirectUri = window.location.href.split('?')[0].split('#')[0];
   const url = `${STRAVA_AUTH_URL}?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&approval_prompt=auto&scope=${STRAVA_SCOPE}`;
   // Save state so we know to return to admin-athlete mode after redirect
-  if (isAdmin) sessionStorage.setItem('stride_strava_from_admin', '1');
+  if (isAdmin) localStorage.setItem('stride_strava_from_admin', '1');
   window.location.href = url;
 }
 
@@ -3826,10 +3826,10 @@ async function doLogin() {
 async function doGoogleLogin() {
   try {
     const { signInWithRedirect } = window._fbFns;
-    sessionStorage.setItem('stride_google_redirect', '1');
+    localStorage.setItem('stride_google_redirect', '1');
     await signInWithRedirect(window._fbAuth, window._fbGoogleProvider);
   } catch(e) {
-    sessionStorage.removeItem('stride_google_redirect');
+    localStorage.removeItem('stride_google_redirect');
     showLoginError('Erro ao entrar com Google: ' + e.message);
   }
 }
@@ -3873,22 +3873,39 @@ async function doLogout() {
 }
 
 // Load user data from Firestore
-async function loadUserData(uid) {
+// Save to Firestore + localStorage cache
+async function saveUserDataToFirestore(uid, data) {
+  try { localStorage.setItem('stride_fb_' + uid, JSON.stringify(data)); } catch(e) {}
   try {
-    const { doc, getDoc } = window._fbFns;
-    const snap = await getDoc(doc(window._fbDb, 'users', uid));
-    if (snap.exists()) return snap.data();
-    return null;
+    const { doc, setDoc } = window._fbFns;
+    await setDoc(doc(window._fbDb, 'users', uid), data, { merge: true });
+    console.log('Firestore save OK');
   } catch(e) {
-    console.warn('loadUserData error:', e.message);
-    return null;
+    console.warn('Firestore save failed (cached locally):', e.message);
   }
 }
 
-// Save user data to Firestore
-async function saveUserDataToFirestore(uid, data) {
-  const { doc, setDoc } = window._fbFns;
-  await setDoc(doc(window._fbDb, 'users', uid), data, { merge: true });
+// Load from Firestore with localStorage fallback
+async function loadUserData(uid) {
+  try {
+    const { doc, getDoc } = window._fbFns;
+    const timeoutP = new Promise(resolve => setTimeout(() => resolve(null), 5000));
+    const snap = await Promise.race([getDoc(doc(window._fbDb, 'users', uid)), timeoutP]);
+    if (snap && typeof snap.exists === 'function' && snap.exists()) {
+      const data = snap.data();
+      try { localStorage.setItem('stride_fb_' + uid, JSON.stringify(data)); } catch(e) {}
+      console.log('Firestore load OK, role:', data.role);
+      return data;
+    }
+  } catch(e) {
+    console.warn('Firestore read error:', e.message);
+  }
+  // Fallback to localStorage
+  try {
+    const cached = localStorage.getItem('stride_fb_' + uid);
+    if (cached) { console.log('Using localStorage fallback'); return JSON.parse(cached); }
+  } catch(e) {}
+  return null;
 }
 
 
@@ -3994,8 +4011,22 @@ async function adminViewAthlete(uid) {
 async function adminToggleRole(uid, currentRole) {
   const newRole = currentRole === 'admin' ? 'athlete' : 'admin';
   if (!confirm(`Trocar função para "${newRole}"?`)) return;
-  await saveUserDataToFirestore(uid, { role: newRole });
-  await loadAdminAthletes();
+  try {
+    await saveUserDataToFirestore(uid, { role: newRole });
+    // Also update localStorage cache for this user
+    try {
+      const cached = localStorage.getItem('stride_fb_' + uid);
+      if (cached) {
+        const data = JSON.parse(cached);
+        data.role = newRole;
+        localStorage.setItem('stride_fb_' + uid, JSON.stringify(data));
+      }
+    } catch(e) {}
+    alert(`Função alterada para "${newRole}" com sucesso!`);
+    await loadAdminAthletes();
+  } catch(e) {
+    alert('Erro ao alterar função: ' + e.message);
+  }
 }
 
 async function adminDeleteUser(uid, name) {
@@ -4130,7 +4161,7 @@ function initFirebase() {
     // Show loading while checking auth
     if (!user) {
       // Only show login if we're not in the middle of a redirect
-      const isRedirecting = sessionStorage.getItem('stride_google_redirect');
+      const isRedirecting = localStorage.getItem('stride_google_redirect');
       if (!isRedirecting) {
         showLoginScreen();
       }
@@ -4138,7 +4169,7 @@ function initFirebase() {
     }
 
     // Clear redirect flag
-    sessionStorage.removeItem('stride_google_redirect');
+    localStorage.removeItem('stride_google_redirect');
     if (!user) {
       showLoginScreen();
       return;
@@ -4152,6 +4183,17 @@ function initFirebase() {
     // Hardcoded admin UIDs as fallback when Firestore is slow
     const ADMIN_UIDS = ['UFHA7vU7hOZQ2UQRqY0HV2qFT4J3'];
     const isHardcodedAdmin = ADMIN_UIDS.includes(user.uid);
+
+    // Pre-populate localStorage with admin role for hardcoded admins
+    if (isHardcodedAdmin) {
+      try {
+        const cached = localStorage.getItem('stride_fb_' + user.uid);
+        if (cached) {
+          const data = JSON.parse(cached);
+          if (data.role !== 'admin') { data.role = 'admin'; localStorage.setItem('stride_fb_' + user.uid, JSON.stringify(data)); }
+        }
+      } catch(e) {}
+    }
 
     // Try to load Firestore data — single attempt with longer timeout
     let userData = null;
@@ -4183,11 +4225,11 @@ function initFirebase() {
     // Check for Strava callback FIRST before any navigation
     const _params = new URLSearchParams(window.location.search);
     const hasStravaCallback = _params.get('code') || _params.get('error');
-    const fromAdminProfile = sessionStorage.getItem('stride_strava_from_admin');
+    const fromAdminProfile = localStorage.getItem('stride_strava_from_admin');
 
     if (hasStravaCallback && fromAdminProfile && isAdmin) {
       // Admin returning from Strava — open athlete profile and handle callback
-      sessionStorage.removeItem('stride_strava_from_admin');
+      localStorage.removeItem('stride_strava_from_admin');
       if (userData?.perfil) {
         state.perfil = userData.perfil;
         state.plano = userData.plano || null;
