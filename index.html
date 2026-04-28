@@ -3824,8 +3824,11 @@ async function doLogin() {
   try {
     const { signInWithEmailAndPassword } = window._fbFns;
     await signInWithEmailAndPassword(window._fbAuth, email, password);
+    // onAuthStateChanged will handle navigation
+    // Re-enable button after 5s as fallback
+    setTimeout(() => { btn.textContent = 'Entrar'; btn.disabled = false; }, 5000);
   } catch(e) {
-    const msgs = { 'auth/user-not-found':'Usuário não encontrado.','auth/wrong-password':'Senha incorreta.','auth/invalid-email':'Email inválido.','auth/too-many-requests':'Muitas tentativas. Tente mais tarde.' };
+    const msgs = { 'auth/user-not-found':'Usuário não encontrado.','auth/wrong-password':'Senha incorreta.','auth/invalid-email':'Email inválido.','auth/too-many-requests':'Muitas tentativas. Tente mais tarde.','auth/invalid-credential':'Email ou senha incorretos.' };
     showLoginError(msgs[e.code] || e.message);
     btn.textContent = 'Entrar'; btn.disabled = false;
   }
@@ -3882,10 +3885,15 @@ async function doLogout() {
 
 // Load user data from Firestore
 async function loadUserData(uid) {
-  const { doc, getDoc } = window._fbFns;
-  const snap = await getDoc(doc(window._fbDb, 'users', uid));
-  if (snap.exists()) return snap.data();
-  return null;
+  try {
+    const { doc, getDoc } = window._fbFns;
+    const snap = await getDoc(doc(window._fbDb, 'users', uid));
+    if (snap.exists()) return snap.data();
+    return null;
+  } catch(e) {
+    console.warn('loadUserData error:', e.message);
+    return null;
+  }
 }
 
 // Save user data to Firestore
@@ -4095,10 +4103,16 @@ function initFirebase() {
     const userInfoEl = document.getElementById('sidebar-user-info');
     if (userInfoEl) userInfoEl.textContent = user.email;
 
-    // Load user doc from Firestore
-    let userData = await loadUserData(user.uid);
+    // Load user doc from Firestore with timeout
+    let userData = null;
+    try {
+      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000));
+      userData = await Promise.race([loadUserData(user.uid), timeoutPromise]);
+    } catch(e) {
+      console.warn('Could not load user data:', e.message);
+    }
 
-    // First login — create user doc
+    // First login or missing doc — create user doc
     if (!userData) {
       userData = {
         email: user.email,
@@ -4106,10 +4120,16 @@ function initFirebase() {
         role: 'athlete',
         createdAt: new Date().toISOString()
       };
-      await setDoc(doc(window._fbDb, 'users', user.uid), userData);
+      try {
+        const { doc, setDoc } = window._fbFns;
+        await setDoc(doc(window._fbDb, 'users', user.uid), userData);
+      } catch(e) {
+        console.warn('Could not create user doc:', e.message);
+      }
     }
 
-    isAdmin = userData.role === 'admin';
+    // Check if this is the manually created admin
+    isAdmin = userData?.role === 'admin';
 
     if (isAdmin) {
       hideLoginScreen();
