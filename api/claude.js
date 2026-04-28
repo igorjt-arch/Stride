@@ -1,16 +1,20 @@
-// Temporary diagnostic
-if (req.method === 'GET') {
-  const keyExists = !!process.env.ANTHROPIC_API_KEY;
-  const keyPrefix = process.env.ANTHROPIC_API_KEY ? process.env.ANTHROPIC_API_KEY.slice(0, 15) : 'NOT SET';
-  res.status(200).json({ keyExists, keyPrefix });
-  return;
-}
 const https = require('https');
 
 module.exports = async function(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS, GET');
+
+  // Diagnostic GET endpoint
+  if (req.method === 'GET') {
+    const key = process.env.ANTHROPIC_API_KEY || '';
+    res.status(200).json({
+      keyExists: !!key,
+      keyPrefix: key.slice(0, 20),
+      keyLength: key.length
+    });
+    return;
+  }
 
   if (req.method === 'OPTIONS') { res.status(200).end(); return; }
   if (req.method !== 'POST') { res.status(405).json({ error: 'Method not allowed' }); return; }
@@ -19,18 +23,16 @@ module.exports = async function(req, res) {
   await new Promise((resolve) => { req.on('data', chunk => body += chunk); req.on('end', resolve); });
 
   let parsed;
-  try { parsed = JSON.parse(body); } catch(e) { res.status(400).json({ error: 'Invalid JSON: ' + e.message }); return; }
+  try { parsed = JSON.parse(body); } catch(e) { res.status(400).json({ error: 'Invalid JSON' }); return; }
 
   const prompt = parsed.prompt || '';
   if (!prompt) { res.status(400).json({ error: 'No prompt' }); return; }
-
-  const truncated = prompt.slice(0, 8000);
 
   const payload = JSON.stringify({
     model: 'claude-sonnet-4-20250514',
     max_tokens: 1500,
     system: 'You are an expert in sports science and running training. Be direct and practical.',
-    messages: [{ role: 'user', content: truncated }]
+    messages: [{ role: 'user', content: prompt.slice(0, 8000) }]
   });
 
   return new Promise((resolve) => {
@@ -56,7 +58,7 @@ module.exports = async function(req, res) {
             res.status(200).json(obj);
           }
         } catch(e) {
-          res.status(500).json({ error: 'Parse error: ' + e.message, raw: data.slice(0, 500) });
+          res.status(500).json({ error: 'Parse error', raw: data.slice(0, 300) });
         }
         resolve();
       });
