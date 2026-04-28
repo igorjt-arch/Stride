@@ -4074,39 +4074,39 @@ async function doCreateAthlete() {
   }
 
   try {
-    const { createUserWithEmailAndPassword, doc, setDoc } = window._fbFns;
+    // Use Firebase REST API to create user WITHOUT switching sessions
+    const apiKey = 'AIzaSyCsCa33gHhHv7XJElGxaeAVHkOrzmmH7LU';
+    const res = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${apiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password, returnSecureToken: false })
+    });
+    const data = await res.json();
+    if (data.error) {
+      const msgs = { 'EMAIL_EXISTS': 'Este email já está cadastrado.', 'WEAK_PASSWORD': 'Senha muito fraca (mín. 6 caracteres).' };
+      throw new Error(msgs[data.error.message] || data.error.message);
+    }
 
-    // Create user with Firebase Auth (client-side)
-    const cred = await createUserWithEmailAndPassword(window._fbAuth, email, password);
-    const uid = cred.user.uid;
+    const uid = data.localId;
 
-    // Save to Firestore
+    // Save athlete to Firestore using admin's session
+    const { doc, setDoc } = window._fbFns;
     await setDoc(doc(window._fbDb, 'users', uid), {
       email, name, role: 'athlete',
       createdAt: new Date().toISOString()
     });
 
-    // Sign back in as admin (creating user signs in as the new user)
+    // Save to localStorage cache too
+    localStorage.setItem('stride_fb_' + uid, JSON.stringify({
+      email, name, role: 'athlete', createdAt: new Date().toISOString()
+    }));
+
     closeCreateAthleteModal();
     await loadAdminAthletes();
-    alert(`Atleta "${name}" criado com sucesso!\nEmail: ${email}\nSenha: ${password}`);
+    alert(`✓ Atleta "${name}" criado!\nEmail: ${email}\nSenha: ${password}\n\nCompartilhe essas credenciais com o atleta.`);
 
-    // Re-authenticate as admin
-    const { signInWithEmailAndPassword } = window._fbFns;
-    const adminEmail = document.getElementById('sidebar-user-info')?.textContent;
-    if (adminEmail) {
-      const adminPassword = prompt('Para continuar como admin, confirme sua senha:');
-      if (adminPassword) {
-        await signInWithEmailAndPassword(window._fbAuth, adminEmail, adminPassword);
-      }
-    }
   } catch(e) {
-    const msgs = {
-      'auth/email-already-in-use': 'Este email já está cadastrado.',
-      'auth/invalid-email': 'Email inválido.',
-      'auth/weak-password': 'Senha muito fraca.'
-    };
-    document.getElementById('create-athlete-error').textContent = msgs[e.code] || e.message;
+    document.getElementById('create-athlete-error').textContent = e.message;
     document.getElementById('create-athlete-error').style.display = 'block';
   }
 }
