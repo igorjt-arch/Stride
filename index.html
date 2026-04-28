@@ -1,0 +1,3360 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stride — Corrida com Ciência</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0d0f0e;
+  --surface: #151918;
+  --surface2: #1c211f;
+  --border: rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.12);
+  --text: #e8ede9;
+  --text2: #8a9b8e;
+  --text3: #5a6b5e;
+  --green: #4ade80;
+  --green-dim: #22c55e;
+  --green-bg: rgba(74,222,128,0.08);
+  --amber: #fbbf24;
+  --amber-bg: rgba(251,191,36,0.08);
+  --red: #f87171;
+  --red-bg: rgba(248,113,113,0.08);
+  --accent: #4ade80;
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Instrument Sans', sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+/* LAYOUT */
+.app { display: flex; min-height: 100vh; }
+
+.sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  padding: 28px 0;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.main {
+  margin-left: 220px;
+  flex: 1;
+  padding: 36px 40px;
+  max-width: 900px;
+}
+
+/* LOGO */
+.logo {
+  padding: 0 20px 28px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 20px;
+}
+.logo-text {
+  font-family: 'DM Serif Display', serif;
+  font-size: 22px;
+  color: var(--text);
+  letter-spacing: -0.5px;
+}
+.logo-sub {
+  font-size: 11px;
+  color: var(--text3);
+  font-family: 'DM Mono', monospace;
+  margin-top: 2px;
+}
+
+/* NAV */
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 20px;
+  font-size: 13px;
+  color: var(--text2);
+  cursor: pointer;
+  transition: all 0.15s;
+  border-left: 2px solid transparent;
+}
+.nav-item:hover { color: var(--text); background: rgba(255,255,255,0.03); }
+.nav-item.active { color: var(--green); border-left-color: var(--green); background: var(--green-bg); }
+.nav-icon { font-size: 14px; width: 18px; text-align: center; }
+.nav-section {
+  font-size: 10px;
+  font-family: 'DM Mono', monospace;
+  color: var(--text3);
+  padding: 16px 20px 6px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* READINESS BADGE in sidebar */
+.readiness-card {
+  margin: 20px 12px 0;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+}
+.readiness-label { font-size: 10px; color: var(--text3); font-family: 'DM Mono', monospace; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+.readiness-score { font-size: 28px; font-family: 'DM Serif Display', serif; }
+.readiness-score.green { color: var(--green); }
+.readiness-score.amber { color: var(--amber); }
+.readiness-score.red { color: var(--red); }
+.readiness-desc { font-size: 11px; color: var(--text2); margin-top: 3px; }
+
+/* PAGES */
+.page { display: none; }
+.page.active { display: block; }
+
+/* PAGE HEADER */
+.page-header { margin-bottom: 32px; }
+.page-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 30px;
+  color: var(--text);
+  letter-spacing: -0.5px;
+  line-height: 1.2;
+}
+.page-sub { font-size: 13px; color: var(--text2); margin-top: 6px; }
+
+/* CARDS */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px 24px;
+  margin-bottom: 16px;
+}
+.card-title {
+  font-size: 12px;
+  font-family: 'DM Mono', monospace;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 14px;
+}
+.card-title.with-badge { display: flex; align-items: center; justify-content: space-between; }
+
+/* GRID */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+
+/* STAT CARD */
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+}
+.stat-label { font-size: 11px; color: var(--text3); font-family: 'DM Mono', monospace; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 8px; }
+.stat-value { font-size: 26px; font-family: 'DM Serif Display', serif; color: var(--text); }
+.stat-unit { font-size: 13px; color: var(--text2); margin-left: 3px; }
+.stat-delta { font-size: 11px; margin-top: 4px; }
+.stat-delta.good { color: var(--green); }
+.stat-delta.warn { color: var(--amber); }
+.stat-delta.bad { color: var(--red); }
+
+/* FORMS */
+label { font-size: 12px; color: var(--text2); display: block; margin-bottom: 6px; font-family: 'DM Mono', monospace; }
+input[type="text"], input[type="number"], select, textarea {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-family: 'Instrument Sans', sans-serif;
+  font-size: 14px;
+  padding: 10px 14px;
+  outline: none;
+  transition: border-color 0.15s;
+  margin-bottom: 16px;
+}
+input:focus, select:focus, textarea:focus { border-color: var(--green); }
+select option { background: var(--surface); }
+textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
+
+/* RANGE */
+.range-wrap { margin-bottom: 16px; }
+.range-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.range-val { font-family: 'DM Mono', monospace; font-size: 13px; color: var(--green); }
+input[type="range"] {
+  width: 100%;
+  accent-color: var(--green);
+  margin: 0;
+  background: transparent;
+}
+
+/* BUTTONS */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 20px;
+  border-radius: var(--radius-sm);
+  font-family: 'Instrument Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: all 0.15s;
+}
+.btn-primary { background: var(--green); color: #0d1f11; }
+.btn-primary:hover { background: #6ee79a; }
+.btn-secondary {
+  background: transparent;
+  border: 1px solid var(--border2);
+  color: var(--text2);
+}
+.btn-secondary:hover { border-color: var(--green); color: var(--green); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* TAGS / BADGES */
+.badge {
+  display: inline-block;
+  font-size: 10px;
+  font-family: 'DM Mono', monospace;
+  padding: 3px 8px;
+  border-radius: 20px;
+  font-weight: 500;
+}
+.badge-green { background: var(--green-bg); color: var(--green); border: 1px solid rgba(74,222,128,0.2); }
+.badge-amber { background: var(--amber-bg); color: var(--amber); border: 1px solid rgba(251,191,36,0.2); }
+.badge-red { background: var(--red-bg); color: var(--red); border: 1px solid rgba(248,113,113,0.2); }
+.badge-dim { background: rgba(255,255,255,0.05); color: var(--text2); border: 1px solid var(--border); }
+
+/* AI RESPONSE */
+.ai-response {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--green);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--text);
+  margin-top: 16px;
+  white-space: pre-wrap;
+}
+.ai-response-title {
+  font-size: 10px;
+  font-family: 'DM Mono', monospace;
+  color: var(--green);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 10px;
+}
+.ai-thinking {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text2);
+  font-size: 13px;
+  padding: 14px 0;
+}
+.dot-pulse { display: flex; gap: 4px; }
+.dot-pulse span {
+  width: 6px; height: 6px;
+  background: var(--green);
+  border-radius: 50%;
+  animation: pulse 1.2s ease-in-out infinite;
+}
+.dot-pulse span:nth-child(2) { animation-delay: 0.2s; }
+.dot-pulse span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes pulse { 0%,80%,100%{opacity:0.2;transform:scale(0.8)} 40%{opacity:1;transform:scale(1)} }
+
+/* WEEK PLAN */
+.week-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-bottom: 16px; }
+.day-card {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 8px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.15s;
+  min-height: 90px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+.day-card:hover { border-color: var(--border2); }
+.day-card.rest { opacity: 0.5; }
+.day-card.done { border-color: var(--green); background: var(--green-bg); }
+.day-card.missed { border-color: var(--red); background: var(--red-bg); }
+.day-card.today { border-color: var(--amber); }
+.day-name { font-size: 10px; font-family: 'DM Mono', monospace; color: var(--text3); text-transform: uppercase; }
+.day-type { font-size: 11px; font-weight: 500; margin-top: 3px; }
+.day-dist { font-size: 13px; font-family: 'DM Serif Display', serif; color: var(--text); }
+
+/* RISK BARS */
+.risk-item { margin-bottom: 14px; }
+.risk-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+.risk-name { font-size: 13px; color: var(--text); }
+.risk-pct { font-size: 12px; font-family: 'DM Mono', monospace; }
+.risk-track { height: 5px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
+.risk-fill { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
+
+/* SLEEP DOTS */
+.sleep-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 6px; margin-bottom: 16px; }
+.sleep-dot {
+  aspect-ratio: 1;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-family: 'DM Mono', monospace;
+  color: var(--text3);
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+.sleep-dot:hover { transform: scale(1.1); }
+
+/* SEPARATOR */
+.sep { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
+
+/* CHECKBOX */
+.check-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; cursor: pointer; }
+.check-row input { width: 15px; height: 15px; accent-color: var(--green); cursor: pointer; }
+.check-row span { font-size: 13px; color: var(--text); }
+
+/* EXERCISE LIST */
+.exercise-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+}
+.exercise-item:last-child { border-bottom: none; }
+.exercise-num {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-family: 'DM Mono', monospace;
+  color: var(--text2);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.exercise-name { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 2px; }
+.exercise-detail { font-size: 12px; color: var(--text2); }
+.exercise-cite { font-size: 10px; font-family: 'DM Mono', monospace; color: var(--text3); margin-top: 3px; }
+
+/* ONBOARDING */
+.onb-step { display: none; }
+.onb-step.active { display: block; }
+.onb-progress { display: flex; gap: 6px; margin-bottom: 32px; }
+.onb-pip { height: 3px; flex: 1; border-radius: 2px; background: var(--surface2); transition: background 0.3s; }
+.onb-pip.done { background: var(--green); }
+.onb-pip.active { background: var(--green); opacity: 0.5; }
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+/* EMPTY STATE */
+.empty { text-align: center; padding: 40px 20px; color: var(--text2); }
+.empty-icon { font-size: 32px; margin-bottom: 12px; }
+.empty-title { font-size: 15px; font-weight: 500; color: var(--text); margin-bottom: 6px; }
+.empty-text { font-size: 13px; color: var(--text2); }
+
+/* SCIENCE REF */
+.sci-ref {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  font-family: 'DM Mono', monospace;
+  color: var(--text3);
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 2px 7px;
+  margin-top: 5px;
+}
+
+/* PAPERS */
+.paper-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  margin-bottom: 12px;
+  transition: border-color 0.15s;
+}
+.paper-card:hover { border-color: var(--border2); }
+.paper-card.expanded { border-color: var(--green); }
+.paper-header { display: flex; align-items: flex-start; gap: 12px; cursor: pointer; }
+.paper-tag {
+  font-size: 10px; font-family: 'DM Mono', monospace;
+  padding: 3px 8px; border-radius: 4px; font-weight: 500;
+  white-space: nowrap; flex-shrink: 0; margin-top: 2px;
+}
+.paper-tag-lesao { background: var(--red-bg); color: var(--red); border: 1px solid rgba(248,113,113,0.2); }
+.paper-tag-treino { background: var(--blue-bg, rgba(55,138,221,0.1)); color: #60a5fa; border: 1px solid rgba(96,165,250,0.2); }
+.paper-tag-prevencao { background: var(--green-bg); color: var(--green); border: 1px solid rgba(74,222,128,0.2); }
+.paper-tag-carga { background: var(--amber-bg); color: var(--amber); border: 1px solid rgba(251,191,36,0.2); }
+.paper-tag-sono { background: rgba(167,139,250,0.1); color: #a78bfa; border: 1px solid rgba(167,139,250,0.2); }
+.paper-meta { flex: 1; }
+.paper-title { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 3px; line-height: 1.4; }
+.paper-authors { font-size: 11px; color: var(--text2); font-family: 'DM Mono', monospace; margin-bottom: 2px; }
+.paper-journal { font-size: 11px; color: var(--text3); font-family: 'DM Mono', monospace; }
+.paper-expand { color: var(--text3); font-size: 13px; flex-shrink: 0; margin-top: 2px; transition: transform 0.2s; }
+.paper-card.expanded .paper-expand { transform: rotate(180deg); color: var(--green); }
+.paper-body { display: none; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
+.paper-card.expanded .paper-body { display: block; }
+.paper-resumo { font-size: 13px; color: var(--text); line-height: 1.75; margin-bottom: 12px; }
+.paper-aplicacao { font-size: 12px; color: var(--text2); line-height: 1.6; background: var(--surface2); border-radius: var(--radius-sm); padding: 10px 14px; margin-bottom: 10px; }
+.paper-aplicacao strong { color: var(--green); }
+.paper-doi { font-size: 11px; font-family: 'DM Mono', monospace; color: var(--text3); }
+.paper-doi a { color: var(--green); text-decoration: none; }
+.filter-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+.filter-btn {
+  font-size: 11px; font-family: 'DM Mono', monospace; font-weight: 500;
+  padding: 5px 12px; border-radius: 20px; border: 1px solid var(--border2);
+  background: transparent; color: var(--text2); cursor: pointer; transition: all 0.15s;
+}
+.filter-btn:hover { color: var(--text); border-color: var(--green); }
+.filter-btn.active { background: var(--green-bg); color: var(--green); border-color: rgba(74,222,128,0.3); }
+.search-papers {
+  width: 100%; background: var(--surface2); border: 1px solid var(--border2);
+  border-radius: var(--radius-sm); color: var(--text); font-family: 'Instrument Sans', sans-serif;
+  font-size: 14px; padding: 11px 16px; outline: none; margin-bottom: 20px;
+  transition: border-color 0.15s;
+}
+.search-papers:focus { border-color: var(--green); }
+.papers-count { font-size: 11px; color: var(--text3); font-family: 'DM Mono', monospace; margin-bottom: 16px; }
+.ai-resumo-btn { margin-top: 16px; }
+
+/* PROFILE SELECTOR */
+.profiles-screen {
+  position: fixed; inset: 0; background: var(--bg);
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; z-index: 1000; padding: 24px;
+}
+.profiles-logo {
+  font-family: 'DM Serif Display', serif; font-size: 36px;
+  color: var(--text); letter-spacing: -1px; margin-bottom: 6px;
+}
+.profiles-sub { font-size: 13px; color: var(--text3); font-family: 'DM Mono', monospace; margin-bottom: 48px; }
+.profiles-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 14px; width: 100%; max-width: 620px; margin-bottom: 20px;
+}
+.profile-tile {
+  background: var(--surface); border: 1.5px solid var(--border);
+  border-radius: var(--radius); padding: 20px 16px; text-align: center;
+  cursor: pointer; transition: all 0.15s; position: relative;
+}
+.profile-tile:hover { border-color: var(--green); transform: translateY(-2px); }
+.profile-tile.add-new { border-style: dashed; border-color: var(--border2); }
+.profile-tile.add-new:hover { border-color: var(--green); border-style: dashed; }
+.profile-avatar {
+  width: 52px; height: 52px; border-radius: 50%;
+  background: var(--green-bg); border: 1.5px solid rgba(74,222,128,0.3);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; margin: 0 auto 10px;
+}
+.profile-tile-name { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 3px; }
+.profile-tile-meta { font-size: 11px; color: var(--text2); font-family: 'DM Mono', monospace; }
+.profile-tile-del {
+  position: absolute; top: 8px; right: 8px; width: 20px; height: 20px;
+  background: none; border: none; color: var(--text3); cursor: pointer;
+  font-size: 14px; display: none; border-radius: 4px; transition: all 0.1s;
+}
+.profile-tile:hover .profile-tile-del { display: flex; align-items: center; justify-content: center; }
+.profile-tile-del:hover { background: var(--red-bg); color: var(--red); }
+.profile-switcher {
+  display: flex; align-items: center; gap: 8px; padding: 6px 10px;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); cursor: pointer; margin: 0 12px;
+  transition: all 0.15s;
+}
+.profile-switcher:hover { border-color: var(--green); }
+.profile-switcher-avatar {
+  width: 24px; height: 24px; border-radius: 50%;
+  background: var(--green-bg); border: 1px solid rgba(74,222,128,0.3);
+  display: flex; align-items: center; justify-content: center; font-size: 12px;
+  flex-shrink: 0;
+}
+.profile-switcher-name { font-size: 12px; color: var(--text); font-weight: 500; }
+.profile-switcher-arrow { font-size: 10px; color: var(--text3); margin-left: auto; }
+
+/* LANGUAGE */
+.lang-btn {
+  width: 100%; text-align: left; padding: 7px 10px;
+  background: transparent; border: 1px solid transparent;
+  border-radius: var(--radius-sm); font-size: 12px; color: var(--text2);
+  cursor: pointer; transition: all 0.15s; font-family: 'Instrument Sans', sans-serif;
+}
+.lang-btn:hover { background: rgba(255,255,255,0.04); color: var(--text); }
+.lang-btn.active { background: var(--green-bg); color: var(--green); border-color: rgba(74,222,128,0.2); }
+
+/* STEPPER */
+.stepper-wrap {
+  display: flex; align-items: center; gap: 0;
+  background: var(--surface2); border: 1px solid var(--border2);
+  border-radius: var(--radius-sm); overflow: hidden;
+  width: fit-content; margin-bottom: 4px;
+}
+.stepper-btn {
+  width: 44px; height: 52px; background: none; border: none;
+  color: var(--text2); font-size: 20px; cursor: pointer;
+  transition: all 0.1s; font-family: 'Instrument Sans', sans-serif;
+}
+.stepper-btn:hover { background: rgba(255,255,255,0.05); color: var(--green); }
+.stepper-btn:active { background: rgba(74,222,128,0.1); }
+.stepper-display {
+  display: flex; flex-direction: column; align-items: center;
+  min-width: 72px; padding: 0 8px;
+}
+.stepper-val {
+  font-family: 'DM Serif Display', serif; font-size: 26px;
+  color: var(--text); line-height: 1;
+}
+.stepper-unit { font-size: 10px; color: var(--text3); font-family: 'DM Mono', monospace; margin-top: 2px; }
+
+/* CHIPS */
+.sono-chip {
+  font-size: 12px; font-family: 'DM Mono', monospace; font-weight: 500;
+  padding: 5px 12px; border-radius: 20px; border: 1px solid var(--border2);
+  background: transparent; color: var(--text2); cursor: pointer; transition: all 0.15s;
+}
+.sono-chip:hover { color: var(--text); border-color: var(--green); }
+.sono-chip.active { background: var(--green-bg); color: var(--green); border-color: rgba(74,222,128,0.3); }
+
+.day-chip {
+  font-size: 13px; font-family: 'Instrument Sans', sans-serif; font-weight: 500;
+  padding: 8px 16px; border-radius: var(--radius-sm); border: 1.5px solid var(--border2);
+  background: var(--surface2); color: var(--text2); cursor: pointer; transition: all 0.15s;
+}
+.day-chip:hover { color: var(--text); border-color: var(--green); }
+.day-chip.active { background: var(--green-bg); color: var(--green); border-color: rgba(74,222,128,0.4); }
+
+/* CUSTOM SPORT TAG */
+.custom-esporte-tag {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--surface2); border: 1.5px solid var(--amber);
+  border-radius: var(--radius-sm); padding: 6px 10px;
+  font-size: 12px; color: var(--amber);
+}
+.custom-esporte-tag button {
+  background: none; border: none; color: var(--amber); cursor: pointer;
+  font-size: 13px; padding: 0; line-height: 1;
+}
+
+/* ESPORTE VOLUME ROW */
+.esporte-vol-row {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 8px 12px;
+}
+.esporte-vol-icon { font-size: 16px; width: 22px; text-align: center; }
+.esporte-vol-name { font-size: 13px; color: var(--text); flex: 1; }
+.esporte-vol-input {
+  width: 70px; background: var(--surface); border: 1px solid var(--border2);
+  border-radius: 6px; color: var(--text); font-size: 13px;
+  padding: 5px 8px; text-align: center; font-family: 'DM Mono', monospace;
+  margin-bottom: 0 !important;
+}
+.esporte-vol-unit { font-size: 11px; color: var(--text3); font-family: 'DM Mono', monospace; white-space: nowrap; }
+
+/* ESPORTES COMPLEMENTARES */
+.esporte-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: var(--surface2);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: center;
+  user-select: none;
+}
+.esporte-card:hover { border-color: var(--border2); }
+.esporte-card.selected[data-tipo="prevencao"] { border-color: var(--green); background: var(--green-bg); }
+.esporte-card.selected[data-tipo="carga"] { border-color: var(--amber); background: var(--amber-bg); }
+.esporte-card.selected[data-tipo="neutro"] { border-color: #60a5fa; background: rgba(96,165,250,0.08); }
+.esporte-icon { font-size: 20px; }
+.esporte-nome { font-size: 12px; font-weight: 500; color: var(--text); }
+.esporte-efeito { font-size: 10px; font-family: 'DM Mono', monospace; color: var(--text3); }
+.esporte-card.selected .esporte-efeito { color: inherit; }
+
+
+.strava-orange { color: #fc4c02; }
+.strava-btn {
+  display: inline-flex; align-items: center; gap: 10px;
+  background: #fc4c02; color: #fff; border: none;
+  padding: 11px 22px; border-radius: var(--radius-sm);
+  font-family: 'Instrument Sans', sans-serif; font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: background 0.15s;
+}
+.strava-btn:hover { background: #e04300; }
+.strava-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.strava-connected {
+  display: flex; align-items: center; gap: 10px;
+  background: rgba(252,76,2,0.08); border: 1px solid rgba(252,76,2,0.25);
+  border-radius: var(--radius-sm); padding: 12px 16px;
+  font-size: 13px; color: #fc4c02; margin-bottom: 16px;
+}
+.activity-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 0; border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+.activity-row:last-child { border-bottom: none; }
+.activity-name { font-weight: 500; color: var(--text); margin-bottom: 2px; }
+.activity-meta { font-size: 11px; color: var(--text2); font-family: 'DM Mono', monospace; }
+.activity-stats { display: flex; gap: 14px; text-align: right; }
+.activity-stat-val { font-family: 'DM Serif Display', serif; font-size: 15px; color: var(--text); }
+.activity-stat-lbl { font-size: 10px; color: var(--text3); font-family: 'DM Mono', monospace; }
+.token-input-wrap { position: relative; }
+.token-toggle { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text3); cursor: pointer; font-size: 12px; font-family: 'DM Mono', monospace; }
+
+
+@media (max-width: 768px) {
+  .sidebar { width: 180px; }
+  .main { margin-left: 180px; padding: 24px 20px; }
+  .grid-2, .grid-3 { grid-template-columns: 1fr; }
+  .week-grid { grid-template-columns: repeat(4, 1fr); }
+}
+</style>
+</head>
+<body>
+
+<!-- PROFILE SELECTOR SCREEN -->
+<div id="profiles-screen" class="profiles-screen">
+  <div class="profiles-logo">Stride</div>
+  <div class="profiles-sub">corrida com ciência</div>
+  <div class="profiles-grid" id="profiles-grid"></div>
+  <p style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace">Selecione um perfil para começar</p>
+</div>
+
+<div class="app" id="main-app" style="display:none">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-text">Stride</div>
+      <div class="logo-sub">corrida com ciência</div>
+    </div>
+
+    <div class="profile-switcher" onclick="showProfilesScreen()" title="Trocar perfil">
+      <div class="profile-switcher-avatar" id="sidebar-avatar">🏃</div>
+      <div class="profile-switcher-name" id="sidebar-profile-name">Perfil</div>
+      <div class="profile-switcher-arrow">⇄</div>
+    </div>
+
+    <div class="nav-section">Treino</div>
+    <div class="nav-item active" onclick="navigate('dashboard')">
+      <span class="nav-icon">⬡</span> <span data-t="nav-dashboard">Dashboard</span>
+    </div>
+    <div class="nav-item" onclick="navigate('plano')">
+      <span class="nav-icon">📅</span> <span data-t="nav-plano">Plano semanal</span>
+    </div>
+    <div class="nav-item" onclick="navigate('gerar')">
+      <span class="nav-icon">✦</span> <span data-t="nav-gerar">Gerar treino</span>
+    </div>
+
+    <div class="nav-section">Saúde</div>
+    <div class="nav-item" onclick="navigate('sono')">
+      <span class="nav-icon">🌙</span> <span data-t="nav-sono">Sono & recover.</span>
+    </div>
+    <div class="nav-item" onclick="navigate('lesao')">
+      <span class="nav-icon">🛡</span> <span data-t="nav-lesao">Risco de lesão</span>
+    </div>
+    <div class="nav-item" onclick="navigate('forca')">
+      <span class="nav-icon">◈</span> <span data-t="nav-forca">Fortalecimento</span>
+    </div>
+
+    <div class="nav-section">Perfil</div>
+    <div class="nav-item" onclick="navigate('perfil')">
+      <span class="nav-icon">◉</span> <span data-t="nav-perfil">Meu perfil</span>
+    </div>
+    <div class="nav-item" onclick="navigate('integracoes')">
+      <span class="nav-icon">⟁</span> <span data-t="nav-integracoes">Integrações</span>
+      <span id="strava-dot" style="display:none;width:6px;height:6px;border-radius:50%;background:#fc4c02;margin-left:auto;flex-shrink:0"></span>
+    </div>
+
+    <div class="nav-section">Ciência</div>
+    <div class="nav-item" onclick="navigate('evidencias')">
+      <span class="nav-icon">🔬</span> <span data-t="nav-evidencias">Base científica</span>
+    </div>
+
+    <div class="nav-section">Idioma</div>
+    <div id="lang-selector" style="padding:4px 12px 12px">
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <button class="lang-btn active" data-lang="pt" onclick="setLang('pt',this)">🇧🇷 Português</button>
+        <button class="lang-btn" data-lang="en" onclick="setLang('en',this)">🇺🇸 English</button>
+        <button class="lang-btn" data-lang="es" onclick="setLang('es',this)">🇪🇸 Español</button>
+        <button class="lang-btn" data-lang="fr" onclick="setLang('fr',this)">🇫🇷 Français</button>
+        <button class="lang-btn" data-lang="de" onclick="setLang('de',this)">🇩🇪 Deutsch</button>
+        <button class="lang-btn" data-lang="it" onclick="setLang('it',this)">🇮🇹 Italiano</button>
+      </div>
+    </div>
+
+    <div class="readiness-card" id="sidebar-readiness">
+      <div class="readiness-label">Readiness hoje</div>
+      <div class="readiness-score amber" id="readiness-num">--</div>
+      <div class="readiness-desc" id="readiness-desc">Complete o perfil</div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- ONBOARDING PAGE -->
+    <div class="page active" id="page-onboarding">
+      <div class="page-header">
+        <div class="page-title">Bem-vindo ao Stride</div>
+        <div class="page-sub">Vamos montar seu perfil para personalizar cada treino com base em ciência.</div>
+      </div>
+
+      <div class="onb-progress">
+        <div class="onb-pip active" id="pip-0"></div>
+        <div class="onb-pip" id="pip-1"></div>
+        <div class="onb-pip" id="pip-2"></div>
+        <div class="onb-pip" id="pip-3"></div>
+      </div>
+
+      <!-- STEP 0: Basic -->
+      <div class="onb-step active" id="step-0">
+        <div class="card">
+          <div class="card-title">Dados básicos</div>
+          <div class="grid-2">
+            <div>
+              <label>Seu nome</label>
+              <input type="text" id="pf-name" placeholder="Ex: Carlos">
+            </div>
+            <div>
+              <label>Tempo de prática na corrida</label>
+              <select id="pf-tempo-pratica">
+                <option value="menos6m">Menos de 6 meses</option>
+                <option value="6a12m">6 a 12 meses</option>
+                <option value="1a2a">1 a 2 anos</option>
+                <option value="2a3a">2 a 3 anos</option>
+                <option value="3a5a">3 a 5 anos</option>
+                <option value="mais5a">Mais de 5 anos</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <input type="hidden" id="pf-nivel-hidden" value="iniciante">
+            <label>Volume semanal de corrida (km) — <span id="nivel-badge" style="color:var(--green);font-family:'DM Mono',monospace;font-size:11px">não corro atualmente</span></label>
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+              <input type="number" id="pf-volume-input" min="0" max="250" value="0" placeholder="0"
+                style="width:90px;margin-bottom:0;font-size:22px;font-family:'DM Serif Display',serif;text-align:center;padding:8px 10px"
+                oninput="onVolumeChange(this.value)">
+              <span style="font-size:13px;color:var(--text2)">km/semana</span>
+              <span id="vol-label" style="font-size:12px;color:var(--text3);font-family:'DM Mono',monospace;margin-left:4px"></span>
+            </div>
+            <div class="range-wrap" style="margin-bottom:4px">
+              <input type="range" min="0" max="150" step="1" value="0" id="pf-volume"
+                oninput="syncVolumeSlider(this.value)" style="margin:0">
+              <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;margin-top:3px">
+                <span>0</span><span>30</span><span>60</span><span>90</span><span>120</span><span>150+</span>
+              </div>
+            </div>
+            <div style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;margin-top:4px;line-height:1.5">
+              ※ Nível considera tempo de prática + volume (Van Gent et al., 2007 · Nielsen et al., 2012)
+            </div>
+          </div>
+          <div class="grid-2">
+            <div>
+              <label>Objetivo principal</label>
+              <select id="pf-objetivo">
+                <option value="">Selecione...</option>
+                <option value="saude">Saúde & bem-estar</option>
+                <option value="5k">Completar um 5K</option>
+                <option value="10k">Completar um 10K</option>
+                <option value="meia">Meia-maratona</option>
+                <option value="maratona">Maratona</option>
+                <option value="performance">Melhorar performance</option>
+              </select>
+            </div>
+            <div>
+              <label>Dias disponíveis p/ corrida na semana</label>
+              <input type="hidden" id="pf-dias" value="3">
+              <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px" id="dias-chips">
+                <button type="button" class="day-chip" data-val="2" onclick="selectDias(2)">2 dias</button>
+                <button type="button" class="day-chip active" data-val="3" onclick="selectDias(3)">3 dias</button>
+                <button type="button" class="day-chip" data-val="4" onclick="selectDias(4)">4 dias</button>
+                <button type="button" class="day-chip" data-val="5" onclick="selectDias(5)">5 dias</button>
+                <button type="button" class="day-chip" data-val="6" onclick="selectDias(6)">6 dias</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- ESPORTES COMPLEMENTARES -->
+          <hr style="border:none;border-top:1px solid var(--border);margin:8px 0 16px">
+          <div class="card-title">Esportes complementares praticados</div>
+          <p style="font-size:12px;color:var(--text2);margin-bottom:14px;line-height:1.6">Atividades além da corrida influenciam sua carga total, risco de lesão e recuperação. (Fredericson & Wolf, 2005 · Telles et al., 2016)</p>
+          <div id="esportes-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-bottom:4px">
+            <label class="esporte-card" data-esporte="yoga" data-tipo="prevencao" onclick="toggleEsporte(this)">
+              <span class="esporte-icon">🧘</span>
+              <span class="esporte-nome">Yoga</span>
+              <span class="esporte-efeito">↓ lesão</span>
+            </label>
+            <label class="esporte-card" data-esporte="pilates" data-tipo="prevencao" onclick="toggleEsporte(this)">
+              <span class="esporte-icon">🤸</span>
+              <span class="esporte-nome">Pilates</span>
+              <span class="esporte-efeito">↓ lesão</span>
+            </label>
+            <label class="esporte-card" data-esporte="natacao" data-tipo="neutro" onclick="toggleEsporte(this)">
+              <span class="esporte-icon">🏊</span>
+              <span class="esporte-nome">Natação</span>
+              <span class="esporte-efeito">carga baixa</span>
+            </label>
+            <label class="esporte-card" data-esporte="bike" data-tipo="carga" onclick="toggleEsporte(this)">
+              <span class="esporte-icon">🚴</span>
+              <span class="esporte-nome">Ciclismo</span>
+              <span class="esporte-efeito">↑ carga</span>
+            </label>
+            <label class="esporte-card" data-esporte="musculacao" data-tipo="prevencao" onclick="toggleEsporte(this)">
+              <span class="esporte-icon">🏋️</span>
+              <span class="esporte-nome">Musculação</span>
+              <span class="esporte-efeito">↓ lesão</span>
+            </label>
+            <label class="esporte-card" data-esporte="futebol" data-tipo="carga" onclick="toggleEsporte(this)">
+              <span class="esporte-icon">⚽</span>
+              <span class="esporte-nome">Futebol</span>
+              <span class="esporte-efeito">↑ carga</span>
+            </label>
+            <label class="esporte-card" data-esporte="tennis" data-tipo="carga" onclick="toggleEsporte(this)">
+              <span class="esporte-icon">🎾</span>
+              <span class="esporte-nome">Tênis</span>
+              <span class="esporte-efeito">↑ carga</span>
+            </label>
+            <label class="esporte-card" data-esporte="alongamento" data-tipo="prevencao" onclick="toggleEsporte(this)">
+              <span class="esporte-icon">🙆</span>
+              <span class="esporte-nome">Alongamento</span>
+              <span class="esporte-efeito">↓ lesão</span>
+            </label>
+            <label class="esporte-card" data-esporte="crossfit" data-tipo="carga" onclick="toggleEsporte(this)">
+              <span class="esporte-icon">🔥</span>
+              <span class="esporte-nome">CrossFit</span>
+              <span class="esporte-efeito">↑ carga</span>
+            </label>
+            <label class="esporte-card" data-esporte="caminhada" data-tipo="neutro" onclick="toggleEsporte(this)">
+              <span class="esporte-icon">🚶</span>
+              <span class="esporte-nome">Caminhada</span>
+              <span class="esporte-efeito">carga baixa</span>
+            </label>
+            <label class="esporte-card" data-esporte="trilha" data-tipo="carga" onclick="toggleEsporte(this)">
+              <span class="esporte-icon">🏔️</span>
+              <span class="esporte-nome">Trilha/Trail</span>
+              <span class="esporte-efeito">↑ carga</span>
+            </label>
+            <label class="esporte-card" data-esporte="nenhum" data-tipo="neutro" onclick="toggleEsporte(this)">
+              <span class="esporte-icon">—</span>
+              <span class="esporte-nome">Nenhum</span>
+              <span class="esporte-efeito">só corrida</span>
+            </label>
+            <div class="esporte-card add-esporte" onclick="adicionarEsporteCustom()" style="border-style:dashed;cursor:pointer">
+              <span class="esporte-icon">+</span>
+              <span class="esporte-nome" style="color:var(--text2)">Outro</span>
+              <span class="esporte-efeito">adicionar</span>
+            </div>
+          </div>
+          <div id="esportes-custom-list" style="margin-top:8px;display:flex;flex-wrap:wrap;gap:8px"></div>
+          <div id="esportes-volume-wrap" style="display:none;margin-top:14px">
+            <div style="font-size:11px;font-family:'DM Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:10px">Volume semanal por esporte complementar (opcional)</div>
+            <div id="esportes-volume-list" style="display:flex;flex-direction:column;gap:8px"></div>
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="nextStep(1)">Continuar →</button>
+      </div>
+
+      <!-- STEP 1: Health -->
+      <div class="onb-step" id="step-1">
+        <div class="card">
+          <div class="card-title">Histórico & saúde</div>
+          <label>Você já teve alguma dessas lesões? (marque todas)</label>
+          <div style="margin-bottom:16px">
+            <label class="check-row"><input type="checkbox" value="iliotibial" class="lesao-check"> <span>Síndrome da banda iliotibial (dor lateral no joelho)</span></label>
+            <label class="check-row"><input type="checkbox" value="fascite" class="lesao-check"> <span>Fascite plantar (dor na sola do pé)</span></label>
+            <label class="check-row"><input type="checkbox" value="patelar" class="lesao-check"> <span>Tendinopatia patelar (dor na frente do joelho)</span></label>
+            <label class="check-row"><input type="checkbox" value="periostite" class="lesao-check"> <span>Canelite / periostite tibial</span></label>
+            <label class="check-row"><input type="checkbox" value="aquiles" class="lesao-check"> <span>Tendinopatia de Aquiles</span></label>
+            <label class="check-row"><input type="checkbox" value="nenhuma" class="lesao-check"> <span>Nenhuma das anteriores</span></label>
+          </div>
+          <div class="grid-2">
+            <div>
+              <label>Pisada (se souber)</label>
+              <select id="pf-pisada">
+                <option value="neutro">Neutra</option>
+                <option value="pronado">Pronada</option>
+                <option value="supinado">Supinada</option>
+                <option value="nao_sei">Não sei</option>
+              </select>
+            </div>
+
+          </div>
+        </div>
+        <div style="display:flex;gap:10px">
+          <button class="btn btn-secondary" onclick="nextStep(0)">← Voltar</button>
+          <button class="btn btn-primary" onclick="nextStep(2)">Continuar →</button>
+        </div>
+      </div>
+
+      <!-- STEP 2: Sleep/recovery baseline -->
+      <div class="onb-step" id="step-2">
+        <div class="card">
+          <div class="card-title">Sono & recuperação</div>
+          <div class="grid-2">
+            <div>
+              <label>Horas de sono por noite (média)</label>
+              <div class="stepper-wrap">
+                <button type="button" class="stepper-btn" onclick="stepSono('pf-sono',-0.5)">−</button>
+                <div class="stepper-display">
+                  <span class="stepper-val" id="pf-sono-display">7.0</span>
+                  <span class="stepper-unit">horas</span>
+                </div>
+                <button type="button" class="stepper-btn" onclick="stepSono('pf-sono',0.5)">+</button>
+              </div>
+              <input type="hidden" id="pf-sono" value="7">
+              <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+                <button type="button" class="sono-chip" onclick="setSono('pf-sono',5)">5h</button>
+                <button type="button" class="sono-chip" onclick="setSono('pf-sono',6)">6h</button>
+                <button type="button" class="sono-chip active" onclick="setSono('pf-sono',7)">7h</button>
+                <button type="button" class="sono-chip" onclick="setSono('pf-sono',8)">8h</button>
+                <button type="button" class="sono-chip" onclick="setSono('pf-sono',9)">9h+</button>
+              </div>
+            </div>
+            <div>
+              <label>Qualidade geral do sono</label>
+              <select id="pf-sono-qual">
+                <option value="ruim">Ruim (acordo cansado)</option>
+                <option value="regular" selected>Regular</option>
+                <option value="boa">Boa</option>
+                <option value="excelente">Excelente</option>
+              </select>
+            </div>
+          </div>
+          <div class="grid-2">
+            <div>
+              <label>Você usa algum wearable? (selecione todos)</label>
+              <div id="pf-wearable-group" style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px">
+                <label class="check-row"><input type="checkbox" value="nenhum" class="wearable-check"> <span>Nenhum</span></label>
+                <label class="check-row"><input type="checkbox" value="garmin" class="wearable-check"> <span>Garmin</span></label>
+                <label class="check-row"><input type="checkbox" value="apple" class="wearable-check"> <span>Apple Watch</span></label>
+                <label class="check-row"><input type="checkbox" value="whoop" class="wearable-check"> <span>Whoop</span></label>
+                <label class="check-row"><input type="checkbox" value="polar" class="wearable-check"> <span>Polar</span></label>
+                <label class="check-row"><input type="checkbox" value="suunto" class="wearable-check"> <span>Suunto</span></label>
+                <label class="check-row"><input type="checkbox" value="coros" class="wearable-check"> <span>Coros</span></label>
+                <label class="check-row"><input type="checkbox" value="fitbit" class="wearable-check"> <span>Fitbit</span></label>
+                <label class="check-row"><input type="checkbox" value="outro" class="wearable-check"> <span>Outro</span></label>
+              </div>
+            </div>
+            <div>
+              <label>Nível de estresse atual (geral)</label>
+              <select id="pf-stress">
+                <option value="baixo">Baixo</option>
+                <option value="moderado" selected>Moderado</option>
+                <option value="alto">Alto</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px">
+          <button class="btn btn-secondary" onclick="nextStep(1)">← Voltar</button>
+          <button class="btn btn-primary" onclick="nextStep(3)">Continuar →</button>
+        </div>
+      </div>
+
+      <!-- STEP 3: Generate -->
+      <div class="onb-step" id="step-3">
+        <div class="card">
+          <div class="card-title">Tudo pronto ✦</div>
+          <p style="font-size:14px;color:var(--text2);margin-bottom:16px">O Stride vai gerar seu plano personalizado com base na literatura científica — levando em conta seu nível, histórico de lesões, disponibilidade e perfil de recuperação.</p>
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 16px;font-size:12px;color:var(--text2);line-height:1.7;">
+            📖 <strong style="color:var(--text)">Base científica utilizada:</strong> princípios de Bompa & Haff (periodização), modelo ACWR de Gabbett (carga aguda:crônica), Fredericson et al. (prevenção SBIT), Dye (envelope de função), Van Gent et al. (epidemiologia de lesões em corrida).
+          </div>
+        </div>
+        <div style="display:flex;gap:10px">
+          <button class="btn btn-secondary" onclick="nextStep(2)">← Voltar</button>
+          <button class="btn btn-primary" id="btn-generate" onclick="generateInitialPlan()">✦ Gerar meu plano</button>
+        </div>
+        <div id="gen-thinking" style="display:none" class="ai-thinking">
+          <div class="dot-pulse"><span></span><span></span><span></span></div>
+          Analisando perfil e gerando plano...
+        </div>
+      </div>
+    </div>
+
+    <!-- DASHBOARD PAGE -->
+    <div class="page" id="page-dashboard">
+      <div class="page-header">
+        <div class="page-title" id="dash-title">Olá, corredor 👋</div>
+        <div class="page-sub">Aqui está seu resumo de hoje.</div>
+      </div>
+
+      <div class="grid-3">
+        <div class="stat-card">
+          <div class="stat-label">Km esta semana</div>
+          <div class="stat-value" id="stat-km">0<span class="stat-unit">km</span></div>
+          <div class="stat-delta good" id="stat-km-delta">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Treinos completos</div>
+          <div class="stat-value" id="stat-done">0<span class="stat-unit">/0</span></div>
+          <div class="stat-delta" id="stat-done-delta">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Score ACWR</div>
+          <div class="stat-value" id="stat-acwr">—</div>
+          <div class="stat-delta good">Zona segura: 0.8–1.3</div>
+        </div>
+      </div>
+
+      <div class="card" id="dash-today-card">
+        <div class="card-title with-badge">
+          Treino de hoje
+          <span class="badge badge-amber" id="dash-today-badge">—</span>
+        </div>
+        <div id="dash-today-content">
+          <div class="empty">
+            <div class="empty-icon">📅</div>
+            <div class="empty-title">Nenhum plano gerado</div>
+            <div class="empty-text">Complete o perfil para ver seu treino.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">Risco de lesão — top 3</div>
+          <div id="dash-risks">
+            <div class="empty" style="padding:20px 0">
+              <div class="empty-text">Gere seu plano primeiro.</div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Dica científica do dia</div>
+          <div id="dash-tip" style="font-size:13px;color:var(--text2);line-height:1.7">
+            Complete seu perfil para receber dicas personalizadas.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PLANO SEMANAL PAGE -->
+    <div class="page" id="page-plano">
+      <div class="page-header">
+        <div class="page-title">Plano semanal</div>
+        <div class="page-sub">Semana atual. Clique em um dia para marcar como feito, perdido ou ver detalhes.</div>
+      </div>
+
+      <div class="card" id="plano-card">
+        <div class="card-title with-badge">
+          Semana 1
+          <button class="btn btn-secondary" style="font-size:12px;padding:5px 12px" onclick="recalcularPlano()">↺ Recalcular plano</button>
+        </div>
+        <div class="week-grid" id="week-grid">
+          <!-- populated by JS -->
+        </div>
+        <div id="day-detail" style="display:none;margin-top:8px">
+          <hr class="sep" style="margin:16px 0 14px">
+          <div id="day-detail-content"></div>
+        </div>
+      </div>
+
+      <div id="recalc-result" style="display:none">
+        <div class="ai-response">
+          <div class="ai-response-title">↺ Recálculo — IA</div>
+          <div id="recalc-text"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GERAR TREINO PAGE -->
+    <div class="page" id="page-gerar">
+      <div class="page-header">
+        <div class="page-title">Gerar treino personalizado</div>
+        <div class="page-sub">Descreva como você está hoje e o que quer treinar. A IA cria uma sessão baseada em ciência.</div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Contexto de hoje</div>
+        <div class="grid-2">
+          <div>
+            <label>Como está sua energia agora?</label>
+            <select id="gen-energia">
+              <option value="muito_baixa">Muito baixa</option>
+              <option value="baixa">Baixa</option>
+              <option value="normal" selected>Normal</option>
+              <option value="alta">Alta</option>
+              <option value="excelente">Excelente</option>
+            </select>
+          </div>
+          <div>
+            <label>Dor muscular ou articular?</label>
+            <select id="gen-dor">
+              <option value="nenhuma" selected>Nenhuma</option>
+              <option value="leve">Leve (1–3 / 10)</option>
+              <option value="moderada">Moderada (4–6 / 10)</option>
+              <option value="intensa">Intensa (7+ / 10)</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div>
+            <label>Tipo de treino desejado</label>
+            <select id="gen-tipo">
+              <option value="automatico">Automático (conforme plano)</option>
+              <option value="longo">Corrida longa</option>
+              <option value="intervalado">Intervalado / tiro</option>
+              <option value="tempo">Tempo run (ritmo)</option>
+              <option value="facil">Corrida fácil (recuperação)</option>
+              <option value="forca">Fortalecimento</option>
+            </select>
+          </div>
+          <div>
+            <label>Tempo disponível hoje (min)</label>
+            <div class="range-wrap" style="margin-top:6px">
+              <div class="range-row">
+                <span style="font-size:12px;color:var(--text2)">Minutos</span>
+                <span class="range-val" id="gen-tempo-val">45</span>
+              </div>
+              <input type="range" min="20" max="120" step="5" value="45" id="gen-tempo" oninput="document.getElementById('gen-tempo-val').textContent=this.value">
+            </div>
+          </div>
+        </div>
+        <label>Alguma informação extra? (opcional)</label>
+        <textarea id="gen-extra" placeholder="Ex: estava viajando, dormi mal, quero trabalhar ritmo para os 10K…"></textarea>
+        <button class="btn btn-primary" onclick="gerarTreino()">✦ Gerar treino agora</button>
+      </div>
+
+      <div id="treino-result" style="display:none">
+        <div class="ai-response">
+          <div class="ai-response-title">✦ Treino gerado — baseado em ciência</div>
+          <div id="treino-text"></div>
+        </div>
+      </div>
+      <div id="treino-thinking" style="display:none" class="ai-thinking">
+        <div class="dot-pulse"><span></span><span></span><span></span></div>
+        Analisando perfil e gerando treino personalizado...
+      </div>
+    </div>
+
+    <!-- SONO PAGE -->
+    <div class="page" id="page-sono">
+      <div class="page-header">
+        <div class="page-title">Sono & recuperação</div>
+        <div class="page-sub">Registre seu sono diário. Isso influencia diretamente seu plano e score de risco.</div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Registro de hoje</div>
+        <div class="grid-2">
+          <div>
+            <label>Horas dormidas ontem à noite</label>
+            <div class="stepper-wrap">
+              <button type="button" class="stepper-btn" onclick="stepSono('sono-hoje',-0.5)">−</button>
+              <div class="stepper-display">
+                <span class="stepper-val" id="sono-hoje-display">7.0</span>
+                <span class="stepper-unit">horas</span>
+              </div>
+              <button type="button" class="stepper-btn" onclick="stepSono('sono-hoje',0.5)">+</button>
+            </div>
+            <input type="hidden" id="sono-hoje" value="7">
+            <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+              <button type="button" class="sono-chip" onclick="setSono('sono-hoje',4)">4h</button>
+              <button type="button" class="sono-chip" onclick="setSono('sono-hoje',5)">5h</button>
+              <button type="button" class="sono-chip" onclick="setSono('sono-hoje',6)">6h</button>
+              <button type="button" class="sono-chip active" onclick="setSono('sono-hoje',7)">7h</button>
+              <button type="button" class="sono-chip" onclick="setSono('sono-hoje',8)">8h</button>
+              <button type="button" class="sono-chip" onclick="setSono('sono-hoje',9)">9h+</button>
+            </div>
+          </div>
+          <div>
+            <label>Qualidade subjetiva do sono</label>
+            <select id="sono-qual">
+              <option value="1">1 — Péssimo</option>
+              <option value="2">2 — Ruim</option>
+              <option value="3" selected>3 — Regular</option>
+              <option value="4">4 — Bom</option>
+              <option value="5">5 — Excelente</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div>
+            <label>Energia ao acordar</label>
+            <select id="sono-energia">
+              <option value="muito_baixa">Muito baixa</option>
+              <option value="baixa">Baixa</option>
+              <option value="normal" selected>Normal</option>
+              <option value="alta">Alta</option>
+            </select>
+          </div>
+          <div>
+            <label>HRV (se tiver wearable)</label>
+            <input type="number" id="sono-hrv" placeholder="Ex: 52 ms (opcional)">
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="registrarSono()">Registrar & analisar</button>
+      </div>
+
+      <div id="sono-result" style="display:none">
+        <div class="ai-response">
+          <div class="ai-response-title">🌙 Análise de recuperação</div>
+          <div id="sono-text"></div>
+        </div>
+      </div>
+      <div id="sono-thinking" style="display:none" class="ai-thinking">
+        <div class="dot-pulse"><span></span><span></span><span></span></div>
+        Analisando dados de sono e recuperação...
+      </div>
+
+      <div class="card" style="margin-top:16px">
+        <div class="card-title">Histórico dos últimos 7 dias</div>
+        <div class="sleep-grid" id="sleep-history"></div>
+        <div style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;margin-top:4px">● Verde = boa qualidade / ● Amarelo = regular / ● Vermelho = ruim</div>
+      </div>
+    </div>
+
+    <!-- LESÃO PAGE -->
+    <div class="page" id="page-lesao">
+      <div class="page-header">
+        <div class="page-title">Risco de lesão</div>
+        <div class="page-sub">Score calculado com base em carga, sono, variação de ritmo e seu histórico. Atualizado diariamente.</div>
+      </div>
+
+      <div class="grid-2">
+        <div class="stat-card">
+          <div class="stat-label">Score global de risco</div>
+          <div class="stat-value" id="lesao-score" style="font-size:40px">—</div>
+          <div class="stat-delta" id="lesao-score-desc">Gere seu plano primeiro</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">ACWR atual</div>
+          <div class="stat-value" id="lesao-acwr">—</div>
+          <div class="stat-delta good">Ideal: 0.8–1.3 (Gabbett, 2016)</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Risco por tipo de lesão</div>
+        <div id="lesao-riscos">
+          <div class="empty">
+            <div class="empty-text">Gere seu plano para ver a análise de risco.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Analisar risco de uma sessão específica</div>
+        <div class="grid-2">
+          <div>
+            <label>Distância planejada (km)</label>
+            <input type="number" id="risk-dist" placeholder="Ex: 12" min="1" max="50">
+          </div>
+          <div>
+            <label>Intensidade</label>
+            <select id="risk-int">
+              <option value="facil">Fácil (Z1–Z2)</option>
+              <option value="moderado" selected>Moderado (Z3)</option>
+              <option value="intenso">Intenso (Z4–Z5)</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="analisarRisco()">Analisar risco desta sessão</button>
+      </div>
+
+      <div id="risco-result" style="display:none">
+        <div class="ai-response">
+          <div class="ai-response-title">🛡 Análise de risco — IA</div>
+          <div id="risco-text"></div>
+        </div>
+      </div>
+      <div id="risco-thinking" style="display:none" class="ai-thinking">
+        <div class="dot-pulse"><span></span><span></span><span></span></div>
+        Calculando risco com base no seu perfil...
+      </div>
+    </div>
+
+    <!-- FORTALECIMENTO PAGE -->
+    <div class="page" id="page-forca">
+      <div class="page-header">
+        <div class="page-title">Fortalecimento</div>
+        <div class="page-sub">Treinos complementares baseados em evidência para prevenir lesões e melhorar economia de corrida.</div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Gerar sessão de fortalecimento</div>
+        <div class="grid-2">
+          <div>
+            <label>Foco da sessão</label>
+            <select id="forca-foco">
+              <option value="geral">Geral (prevenção global)</option>
+              <option value="gluteo">Glúteo & quadril</option>
+              <option value="core">Core & estabilização</option>
+              <option value="tornozelo">Tornozelo & pé</option>
+              <option value="joelho">Joelho & patelar</option>
+              <option value="iliotibial">Banda iliotibial</option>
+              <option value="aquiles">Aquiles & fascite</option>
+            </select>
+          </div>
+          <div>
+            <label>Duração disponível</label>
+            <select id="forca-tempo">
+              <option value="15">15 minutos (ativação)</option>
+              <option value="25" selected>25 minutos (padrão)</option>
+              <option value="40">40 minutos (completo)</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label>Equipamentos disponíveis</label>
+          <select id="forca-equip">
+            <option value="nenhum">Sem equipamento (corpo livre)</option>
+            <option value="faixa">Faixa elástica</option>
+            <option value="academia">Academia completa</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" onclick="gerarForca()">✦ Gerar treino de força</button>
+      </div>
+
+      <div id="forca-result" style="display:none">
+        <div class="ai-response">
+          <div class="ai-response-title">◈ Treino de fortalecimento — baseado em evidência</div>
+          <div id="forca-text"></div>
+        </div>
+      </div>
+      <div id="forca-thinking" style="display:none" class="ai-thinking">
+        <div class="dot-pulse"><span></span><span></span><span></span></div>
+        Montando protocolo de fortalecimento...
+      </div>
+    </div>
+
+    <!-- PERFIL PAGE -->
+    <div class="page" id="page-perfil">
+      <div class="page-header">
+        <div class="page-title">Meu perfil</div>
+        <div class="page-sub">Seus dados atuais. Edite para atualizar recomendações.</div>
+      </div>
+      <div class="card" id="perfil-display">
+        <div class="empty">
+          <div class="empty-icon">◉</div>
+          <div class="empty-title">Perfil não configurado</div>
+          <div class="empty-text">Complete o onboarding para ver seu perfil.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- INTEGRAÇÕES PAGE -->
+    <div class="page" id="page-integracoes">
+      <div class="page-header">
+        <div class="page-title">Integrações</div>
+        <div class="page-sub">Conecte seus apps para enriquecer seu plano com dados reais.</div>
+      </div>
+
+      <!-- STRAVA CARD -->
+      <div class="card" id="strava-card">
+        <div class="card-title with-badge">
+          <span>Strava</span>
+          <span id="strava-status-badge" class="badge badge-dim">Não conectado</span>
+        </div>
+
+        <!-- NOT CONNECTED STATE -->
+        <div id="strava-disconnected">
+          <p style="font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:20px">
+            Conecte sua conta Strava para importar seu histórico de corridas. O Stride vai usar
+            as últimas 4 semanas de atividades para calcular seu ACWR real, volume base e
+            zonas de esforço — tornando seu plano muito mais preciso.
+          </p>
+
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px 18px;margin-bottom:20px">
+            <div style="font-size:11px;font-family:'DM Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:12px">Dados importados via Strava API</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px;color:var(--text2)">
+              <div>✓ Histórico de corridas (30 dias)</div>
+              <div>✓ Distância e pace por atividade</div>
+              <div>✓ Frequência cardíaca média/máx</div>
+              <div>✓ Volume semanal real</div>
+              <div>✓ Elevação e tipo de terreno</div>
+              <div>✓ Zonas de FC do atleta</div>
+            </div>
+          </div>
+
+          <div style="margin-bottom:20px">
+            <div style="font-size:11px;font-family:'DM Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:10px">Configuração do app Strava</div>
+            <p style="font-size:12px;color:var(--text2);margin-bottom:12px;line-height:1.6">
+              Crie seu app em <a href="https://www.strava.com/settings/api" target="_blank" style="color:var(--green)">strava.com/settings/api</a> (gratuito, 2 min).
+              Em "Authorization Callback Domain" coloque <code style="background:var(--surface2);padding:2px 6px;border-radius:4px;font-size:11px">localhost</code> para testes locais.
+            </p>
+            <div class="grid-2">
+              <div>
+                <label>Client ID</label>
+                <input type="text" id="strava-client-id" placeholder="Ex: 12345">
+              </div>
+              <div>
+                <label>Client Secret</label>
+                <div class="token-input-wrap">
+                  <input type="password" id="strava-client-secret" placeholder="Ex: abc123...">
+                  <button class="token-toggle" onclick="toggleSecret()">mostrar</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+            <button class="strava-btn" onclick="connectStrava()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.828h4.169"/></svg>
+              Conectar com Strava
+            </button>
+            <span style="font-size:11px;color:var(--text3)">Você será redirecionado para autorizar o acesso</span>
+          </div>
+
+          <!-- Manual token fallback -->
+          <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
+            <div style="font-size:11px;font-family:'DM Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px">Já tenho um access token</div>
+            <p style="font-size:12px;color:var(--text2);margin-bottom:10px">Se já passou pelo fluxo OAuth e tem um token, cole aqui diretamente.</p>
+            <div style="display:flex;gap:10px">
+              <input type="text" id="strava-manual-token" placeholder="Bearer token do Strava" style="flex:1;margin-bottom:0">
+              <button class="btn btn-secondary" style="white-space:nowrap" onclick="connectWithToken()">Usar token</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- CONNECTED STATE -->
+        <div id="strava-connected" style="display:none">
+          <div class="strava-connected">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="#fc4c02"><path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.828h4.169"/></svg>
+            <span id="strava-athlete-name">Conectado ao Strava</span>
+            <button onclick="disconnectStrava()" style="margin-left:auto;background:none;border:none;color:var(--text3);font-size:11px;cursor:pointer;font-family:'DM Mono',monospace">desconectar</button>
+          </div>
+
+          <div class="grid-3" id="strava-summary-stats" style="margin-bottom:20px"></div>
+
+          <div class="card-title" style="margin-bottom:12px">Últimas atividades importadas</div>
+          <div id="strava-activities-list"></div>
+
+          <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
+            <button class="btn btn-primary" onclick="usarDadosStrava()">✦ Usar estes dados no plano</button>
+            <button class="btn btn-secondary" onclick="syncStrava()">↺ Sincronizar novamente</button>
+          </div>
+
+          <div id="strava-ai-result" style="display:none;margin-top:16px">
+            <div class="ai-response">
+              <div class="ai-response-title">✦ Análise do histórico Strava — IA</div>
+              <div id="strava-ai-text"></div>
+            </div>
+          </div>
+          <div id="strava-ai-thinking" style="display:none" class="ai-thinking">
+            <div class="dot-pulse"><span></span><span></span><span></span></div>
+            Analisando histórico de corridas...
+          </div>
+        </div>
+      </div>
+
+      <!-- OTHER INTEGRATIONS (coming soon) -->
+      <div class="card" style="opacity:0.45">
+        <div class="card-title with-badge">
+          <span>Whoop</span>
+          <span class="badge badge-dim">Em breve</span>
+        </div>
+        <p style="font-size:13px;color:var(--text2)">API privada — aguardando acesso ao programa de parceiros.</p>
+      </div>
+      <div class="card" style="opacity:0.45">
+        <div class="card-title with-badge">
+          <span>Garmin Connect</span>
+          <span class="badge badge-dim">Em breve</span>
+        </div>
+        <p style="font-size:13px;color:var(--text2)">Integração via Garmin Health API em desenvolvimento.</p>
+      </div>
+    </div>
+
+    <!-- EVIDÊNCIAS PAGE -->
+    <div class="page" id="page-evidencias">
+      <div class="page-header">
+        <div class="page-title">Base científica</div>
+        <div class="page-sub">Papers que fundamentam cada recomendação do Stride. Pesquise por lesão, tema ou autor.</div>
+      </div>
+
+      <input class="search-papers" id="papers-search" placeholder="🔍  Buscar por lesão, autor, tema... ex: fascite, Gabbett, ACWR" oninput="filtrarPapers()">
+
+      <div class="filter-row" id="filter-row">
+        <button class="filter-btn active" data-cat="todos" onclick="setCatFilter('todos',this)">Todos</button>
+        <button class="filter-btn" data-cat="lesao" onclick="setCatFilter('lesao',this)">Lesões</button>
+        <button class="filter-btn" data-cat="carga" onclick="setCatFilter('carga',this)">Carga & ACWR</button>
+        <button class="filter-btn" data-cat="treino" onclick="setCatFilter('treino',this)">Periodização</button>
+        <button class="filter-btn" data-cat="prevencao" onclick="setCatFilter('prevencao',this)">Prevenção</button>
+        <button class="filter-btn" data-cat="sono" onclick="setCatFilter('sono',this)">Sono & Recuperação</button>
+      </div>
+
+      <div class="papers-count" id="papers-count"></div>
+      <div id="papers-list"></div>
+
+      <div class="card" style="margin-top:24px">
+        <div class="card-title">Resumo geral gerado por IA</div>
+        <p style="font-size:13px;color:var(--text2);margin-bottom:14px">Gere um resumo integrado de como todos esses papers se conectam para formar o protocolo do Stride.</p>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px">
+          <label style="font-size:12px;color:var(--text2);margin:0">Idioma da síntese:</label>
+          <select id="resumo-lang" style="margin:0;width:auto;font-size:13px;padding:6px 12px">
+            <option value="pt">🇧🇷 Português</option>
+            <option value="en">🇺🇸 English</option>
+            <option value="es">🇪🇸 Español</option>
+            <option value="fr">🇫🇷 Français</option>
+            <option value="de">🇩🇪 Deutsch</option>
+            <option value="it">🇮🇹 Italiano</option>
+          </select>
+        </div>
+        <button class="btn btn-primary ai-resumo-btn" onclick="gerarResumoGeral()">✦ Gerar síntese científica</button>
+        <div id="resumo-geral-thinking" style="display:none" class="ai-thinking">
+          <div class="dot-pulse"><span></span><span></span><span></span></div>
+          Sintetizando literatura científica...
+        </div>
+        <div id="resumo-geral-result" style="display:none;margin-top:14px">
+          <div class="ai-response">
+            <div class="ai-response-title">🔬 Síntese científica — IA</div>
+            <div id="resumo-geral-text"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+// ============================================================
+// STATE
+// ============================================================
+const state = {
+  perfil: null,
+  plano: null,
+  sonoHistory: [],
+  semana: [],
+  readiness: null
+};
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function navigate(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  event && event.currentTarget && event.currentTarget.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => {
+    if (n.getAttribute('onclick') && n.getAttribute('onclick').includes("'"+page+"'")) n.classList.add('active');
+  });
+  if (page === 'plano') renderWeek();
+  if (page === 'perfil') renderPerfil();
+  if (page === 'lesao') renderLesaoPage();
+}
+
+// ============================================================
+// ONBOARDING
+// ============================================================
+let currentStep = 0;
+function nextStep(n) {
+  document.getElementById('step-' + currentStep).classList.remove('active');
+  document.getElementById('pip-' + currentStep).classList.remove('active');
+  document.getElementById('pip-' + currentStep).classList.add('done');
+  currentStep = n;
+  document.getElementById('step-' + n).classList.add('active');
+  document.getElementById('pip-' + n).classList.add('active');
+}
+
+function onVolumeChange(v) {
+  v = parseInt(v) || 0;
+  // Sync both input and slider
+  const input = document.getElementById('pf-volume-input');
+  const slider = document.getElementById('pf-volume');
+  if (input && parseInt(input.value) !== v) input.value = v;
+  if (slider) slider.value = Math.min(v, 150);
+
+  // Nivel sugerido baseado em literatura — volume NÃO define nível isoladamente
+  // Van Gent et al. 2007, Buist et al. 2010
+  let label, nivelSug, badge;
+  if (v === 0) {
+    label = 'Não corro atualmente'; nivelSug = 'iniciante'; badge = 'iniciante';
+  } else if (v <= 25) {
+    label = 'Volume baixo'; nivelSug = 'iniciante'; badge = 'iniciante';
+  } else if (v <= 50) {
+    label = 'Volume moderado'; nivelSug = 'iniciante'; badge = 'iniciante (volume moderado)';
+  } else if (v <= 70) {
+    label = 'Volume intermediário'; nivelSug = 'intermediario'; badge = 'intermediário';
+  } else if (v <= 100) {
+    label = 'Volume alto'; nivelSug = 'intermediario'; badge = 'intermediário → avançado';
+  } else {
+    label = 'Volume avançado'; nivelSug = 'avancado'; badge = 'avançado';
+  }
+
+  const lb = document.getElementById('vol-label');
+  if (lb) lb.textContent = label;
+  const nb = document.getElementById('nivel-badge');
+  if (nb) nb.textContent = badge;
+  document.getElementById('pf-nivel-hidden').value = nivelSug;
+}
+
+function syncVolumeSlider(v) {
+  const input = document.getElementById('pf-volume-input');
+  if (input) input.value = v;
+  onVolumeChange(v);
+}
+
+function autoNivel() {}
+
+// Dias de treino chip selector
+function selectDias(val) {
+  document.getElementById('pf-dias').value = val;
+  document.querySelectorAll('.day-chip').forEach(c => {
+    c.classList.toggle('active', parseInt(c.dataset.val) === val);
+  });
+}
+
+// Sleep stepper
+function stepSono(fieldId, delta) {
+  const field = document.getElementById(fieldId);
+  let val = parseFloat(field.value) + delta;
+  val = Math.max(3, Math.min(12, Math.round(val * 2) / 2));
+  field.value = val;
+  const display = document.getElementById(fieldId + '-display');
+  if (display) display.textContent = val.toFixed(1);
+  // sync chips
+  const chips = field.parentElement ? field.parentElement.querySelectorAll('.sono-chip') : [];
+  chips.forEach(c => c.classList.toggle('active', parseFloat(c.getAttribute('onclick').match(/[\d.]+/)?.[0]) === val));
+}
+
+function setSono(fieldId, val) {
+  const field = document.getElementById(fieldId);
+  field.value = val;
+  const display = document.getElementById(fieldId + '-display');
+  if (display) display.textContent = parseFloat(val).toFixed(1);
+  // highlight active chip
+  const parent = field.closest('.card, .onb-step, div') || document;
+  parent.querySelectorAll('.sono-chip').forEach(c => {
+    const chipVal = parseFloat(c.getAttribute('onclick').match(/[\d.]+/)?.[0]);
+    c.classList.toggle('active', chipVal === parseFloat(val));
+  });
+}
+
+// Custom esporte
+const customEsportes = [];
+function adicionarEsporteCustom() {
+  const nome = prompt('Nome do esporte:');
+  if (!nome || !nome.trim()) return;
+  const tipo = confirm(`"${nome}" adiciona carga extra ao seu treino?\n\nOK = Sim (como futebol, crossfit)\nCancelar = Não (como meditação, mobilidade)`) ? 'carga' : 'prevencao';
+  customEsportes.push({ nome: nome.trim(), tipo });
+  renderCustomEsportes();
+  updateEsportesVolume();
+}
+
+function renderCustomEsportes() {
+  const wrap = document.getElementById('esportes-custom-list');
+  if (!wrap) return;
+  wrap.innerHTML = customEsportes.map((e, i) => `
+    <div class="custom-esporte-tag">
+      <span>${e.tipo === 'carga' ? '⚡' : '🌿'} ${e.nome}</span>
+      <button onclick="removeCustomEsporte(${i})">✕</button>
+    </div>
+  `).join('');
+}
+
+function removeCustomEsporte(i) {
+  customEsportes.splice(i, 1);
+  renderCustomEsportes();
+  updateEsportesVolume();
+}
+
+// Show volume inputs for selected sports
+const ESPORTE_ICONS = {yoga:'🧘',pilates:'🤸',natacao:'🏊',bike:'🚴',musculacao:'🏋️',futebol:'⚽',tennis:'🎾',alongamento:'🙆',crossfit:'🔥',caminhada:'🚶',trilha:'🏔️'};
+
+function updateEsportesVolume() {
+  const selecionados = [...document.querySelectorAll('.esporte-card.selected')]
+    .filter(c => c.dataset.esporte !== 'nenhum')
+    .map(c => ({ nome: c.dataset.esporte, tipo: c.dataset.tipo, icon: ESPORTE_ICONS[c.dataset.esporte] || '🏃' }));
+
+  const todos = [...selecionados, ...customEsportes.map(e => ({ nome: e.nome, tipo: e.tipo, icon: e.tipo === 'carga' ? '⚡' : '🌿' }))];
+
+  const wrap = document.getElementById('esportes-volume-wrap');
+  const list = document.getElementById('esportes-volume-list');
+  if (!wrap || !list) return;
+
+  if (todos.length === 0) { wrap.style.display = 'none'; return; }
+  wrap.style.display = 'block';
+  list.innerHTML = todos.map(e => `
+    <div class="esporte-vol-row">
+      <span class="esporte-vol-icon">${e.icon}</span>
+      <span class="esporte-vol-name">${e.nome}</span>
+      <input type="number" class="esporte-vol-input" id="vol-${e.nome.replace(/\s/g,'_')}" placeholder="0" min="0" max="30">
+      <span class="esporte-vol-unit">sessões/sem</span>
+    </div>
+  `).join('');
+}
+
+function getEsportesComVolume() {
+  const selecionados = [...document.querySelectorAll('.esporte-card.selected')]
+    .filter(c => c.dataset.esporte !== 'nenhum')
+    .map(c => ({ nome: c.dataset.esporte, tipo: c.dataset.tipo }));
+  const todos = [...selecionados, ...customEsportes];
+  return todos.map(e => {
+    const input = document.getElementById('vol-' + e.nome.replace(/\s/g,'_'));
+    return { nome: e.nome, tipo: e.tipo, sessoes: input ? parseInt(input.value) || 0 : 0 };
+  });
+}
+
+function toggleEsporte(el) {
+  const esporte = el.dataset.esporte;
+  if (esporte === 'nenhum') {
+    document.querySelectorAll('.esporte-card').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    updateEsportesVolume();
+    return;
+  }
+  document.querySelector('.esporte-card[data-esporte="nenhum"]')?.classList.remove('selected');
+  el.classList.toggle('selected');
+  updateEsportesVolume();
+}
+
+function getEsportesSelecionados() {
+  return [...document.querySelectorAll('.esporte-card.selected')]
+    .map(c => ({ nome: c.dataset.esporte, tipo: c.dataset.tipo }));
+}
+
+async function generateInitialPlan() {
+  const nome = document.getElementById('pf-name').value || 'Atleta';
+  const nivel = document.getElementById('pf-nivel-hidden').value || 'iniciante';
+  const objetivo = document.getElementById('pf-objetivo').value || 'saude';
+  const dias = document.getElementById('pf-dias').value;
+  const pisada = document.getElementById('pf-pisada').value;
+  const base = (document.getElementById('pf-volume-input').value || document.getElementById('pf-volume').value || '0') + ' km/semana';
+  const sono = document.getElementById('pf-sono').value;
+  const sonoQual = document.getElementById('pf-sono-qual').value;
+  const stress = document.getElementById('pf-stress').value;
+  const lesoes = [...document.querySelectorAll('.lesao-check:checked')].map(c => c.value);
+  const wearables = [...document.querySelectorAll('.wearable-check:checked')].map(c => c.value).filter(v => v !== 'nenhum');
+  const tempoPratica = document.getElementById('pf-tempo-pratica').value;
+  const esportes = getEsportesComVolume();
+  const esportesPrevcao = esportes.filter(e => e.tipo === 'prevencao').map(e => e.nome);
+  const esportesCarga = esportes.filter(e => e.tipo === 'carga').map(e => `${e.nome}${e.sessoes > 0 ? ` (${e.sessoes}x/sem)` : ''}`);
+  const esportesCustom = customEsportes.map(e => e.nome);
+
+  state.perfil = { nome, nivel, objetivo, dias: parseInt(dias), pisada, base, sono: parseFloat(sono), sonoQual, stress, lesoes, wearables, tempoPratica, esportes, esportesPrevcao, esportesCarga, esportesCustom };
+  // Update profile index name
+  const _profiles = DB.getProfiles();
+  const _curId = DB.getCurrentId();
+  const _pidx = _profiles.findIndex(p => p.id === _curId);
+  if (_pidx >= 0) { _profiles[_pidx].nome = nome; _profiles[_pidx].objetivo = objetivo; DB.saveProfiles(_profiles); }
+  updateSidebarProfile();
+
+  document.getElementById('btn-generate').disabled = true;
+  document.getElementById('gen-thinking').style.display = 'flex';
+
+  const prompt = `Você é um treinador de corrida especializado baseado em ciência esportiva. 
+Crie um plano de treino semanal personalizado para este atleta:
+
+Nome: ${nome}
+Nível estimado: ${nivel}
+Tempo de prática na corrida: ${tempoPratica}
+Objetivo: ${objetivo}
+Dias disponíveis por semana: ${dias}
+Pisada: ${pisada}
+Volume base atual (corrida apenas, outros esportes abaixo): ${base}
+Horas de sono: ${sono}h (qualidade: ${sonoQual})
+Nível de estresse: ${stress}
+Histórico de lesões: ${lesoes.join(', ') || 'nenhuma'}
+Esportes que ajudam na prevenção: ${esportesPrevcao.join(', ') || 'nenhum'}
+Esportes que adicionam carga extra: ${esportesCarga.join(', ') || 'nenhum'}
+
+IMPORTANTE: Considere os esportes complementares ao calcular a carga total semanal (ACWR). Yoga/Pilates/alongamento reduzem risco de lesão e podem substituir dias de força. Ciclismo/futebol/crossfit adicionam carga e devem ser contabilizados. O tempo de prática é fundamental: menos de 1 ano = tecido conjuntivo ainda em adaptação, alto risco de overuse.
+
+Crie um plano para os próximos 7 dias no seguinte formato JSON estrito (retorne APENAS o JSON, sem markdown, sem explicação):
+{
+  "semana": [
+    {"dia": "Seg", "tipo": "...", "distancia": X, "descricao": "...", "zonas": "...", "descanso": false},
+    ...7 dias no total
+  ],
+  "volume_total": X,
+  "acwr_estimado": "X.X",
+  "nota_cientifica": "...",
+  "risco_principal": "...",
+  "dica_semana": "..."
+}
+
+Para dias de descanso: descanso=true, distancia=0.
+Tipos: "Longo", "Intervalado", "Tempo", "Fácil", "Força", "Yoga/Mobilidade", "Descanso".
+Base científica: periodização de Bompa, ACWR de Gabbett, Meeuwisse et al. 2007 (adaptação tecido conjuntivo), Fredericson & Wolf 2005, Telles et al. 2016.
+Adapte especialmente para as lesões: ${lesoes.join(', ') || 'prevenção geral'}.
+Se pratica esportes de alta carga (${esportesCarga.join(', ') || 'nenhum'}), reduza volume de corrida proporcionalmente.`;
+
+  try {
+    const resp = await callClaude(prompt);
+    let json;
+    try {
+      const clean = resp.replace(/```json|```/g, '').trim();
+      json = JSON.parse(clean);
+    } catch(e) {
+      json = gerarPlanoFallback(dias);
+    }
+    state.plano = json;
+    state.semana = json.semana || [];
+    saveCurrentProfile();
+    calcularReadiness();
+    atualizarDashboard();
+    document.getElementById('gen-thinking').style.display = 'none';
+    navigate('dashboard');
+  } catch(e) {
+    state.plano = gerarPlanoFallback(dias);
+    state.semana = state.plano.semana;
+    calcularReadiness();
+    atualizarDashboard();
+    document.getElementById('gen-thinking').style.display = 'none';
+    navigate('dashboard');
+  }
+}
+
+function gerarPlanoFallback(dias) {
+  const diasNum = parseInt(dias) || 3;
+  const base = [
+    {dia:"Seg",tipo:"Fácil",distancia:5,descricao:"Corrida fácil em Z2. Pace conversacional. Foco em cadência >170 ppm.",zonas:"Z1-Z2 (60-70% FCmax)",descanso:false},
+    {dia:"Ter",tipo:"Força",distancia:0,descricao:"Treino de fortalecimento: glúteo, core, tornozelo. 25 min.",zonas:"—",descanso:false},
+    {dia:"Qua",tipo:"Descanso",distancia:0,descricao:"Recuperação ativa. Alongamento, mobilidade.",zonas:"—",descanso:true},
+    {dia:"Qui",tipo:"Intervalado",distancia:6,descricao:"4x1000m em ritmo de 5K. 2min recuperação entre cada.",zonas:"Z4-Z5 (85-95% FCmax)",descanso:false},
+    {dia:"Sex",tipo:"Fácil",distancia:4,descricao:"Recuperação ativa em pace fácil. Prioridade: sentir leve.",zonas:"Z1-Z2",descanso:false},
+    {dia:"Sáb",tipo:"Descanso",distancia:0,descricao:"Descanso total ou mobilidade.",zonas:"—",descanso:true},
+    {dia:"Dom",tipo:"Longo",distancia:10,descricao:"Corrida longa em Z2. Pace fácil do início ao fim. Hidratação a cada 20 min.",zonas:"Z2 (65-75% FCmax)",descanso:false}
+  ];
+  const volTotal = base.filter(d=>!d.descanso).reduce((s,d)=>s+d.distancia,0);
+  return {semana:base, volume_total:volTotal, acwr_estimado:"0.85", nota_cientifica:"Plano baseado em periodização progressiva (Bompa & Haff, 2009) com ACWR controlado dentro da zona segura (Gabbett, 2016).", risco_principal:"Sobrecarga tibial em iniciantes — controlada com volume progressivo", dica_semana:"A corrida fácil deve ser MESMO fácil: você deve conseguir conversar frases completas sem fôlego."};
+}
+
+// ============================================================
+// DASHBOARD
+// ============================================================
+function atualizarDashboard() {
+  if (!state.perfil) return;
+  document.getElementById('dash-title').textContent = 'Olá, ' + state.perfil.nome + ' 👋';
+
+  if (!state.plano) return;
+  const semana = state.semana;
+  const feitos = semana.filter(d => d.feito).length;
+  const total = semana.filter(d => !d.descanso).length;
+  const kmFeitos = semana.filter(d=>d.feito).reduce((s,d)=>s+(d.distancia||0),0);
+
+  document.getElementById('stat-km').innerHTML = Math.round(kmFeitos) + '<span class="stat-unit">km</span>';
+  document.getElementById('stat-km-delta').textContent = 'Meta: ' + (state.plano.volume_total || '—') + ' km';
+  document.getElementById('stat-done').innerHTML = feitos + '<span class="stat-unit">/' + total + '</span>';
+  document.getElementById('stat-acwr').textContent = state.plano.acwr_estimado || '—';
+
+  // Today's workout
+  const hoje = new Date().getDay();
+  const dias = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+  const diaHoje = dias[hoje];
+  const treino = semana.find(d => d.dia === diaHoje) || semana[0];
+
+  if (treino) {
+    const badge = document.getElementById('dash-today-badge');
+    badge.textContent = treino.tipo;
+    badge.className = 'badge ' + (treino.descanso ? 'badge-dim' : treino.tipo==='Intervalado'||treino.tipo==='Tempo' ? 'badge-amber' : 'badge-green');
+
+    document.getElementById('dash-today-content').innerHTML = `
+      <div style="font-size:15px;font-weight:500;color:var(--text);margin-bottom:6px">${treino.descricao}</div>
+      ${treino.distancia>0 ? '<div style="font-size:13px;color:var(--text2);margin-bottom:4px">📏 '+treino.distancia+' km &nbsp;·&nbsp; '+treino.zonas+'</div>' : ''}
+      <div style="margin-top:10px;font-size:12px;color:var(--text3);font-family:\'DM Mono\',monospace;line-height:1.6">${state.plano.nota_cientifica||''}</div>
+    `;
+  }
+
+  // Risks
+  const riscos = [
+    {nome: 'Síndrome iliotibial', val: calcRisco('iliotibial'), cor: '#f87171'},
+    {nome: 'Fascite plantar', val: calcRisco('fascite'), cor: '#fbbf24'},
+    {nome: 'Tendinopatia patelar', val: calcRisco('patelar'), cor: '#f87171'},
+  ];
+  document.getElementById('dash-risks').innerHTML = riscos.map(r => `
+    <div class="risk-item">
+      <div class="risk-row">
+        <span class="risk-name">${r.nome}</span>
+        <span class="risk-pct" style="color:${r.val>60?'var(--red)':r.val>35?'var(--amber)':'var(--green)'}">${r.val}%</span>
+      </div>
+      <div class="risk-track">
+        <div class="risk-fill" style="width:${r.val}%;background:${r.val>60?'var(--red)':r.val>35?'var(--amber)':'var(--green)'}"></div>
+      </div>
+    </div>
+  `).join('');
+
+  document.getElementById('dash-tip').textContent = state.plano.dica_semana || '—';
+
+  // Sidebar readiness
+  renderReadiness();
+}
+
+function calcRisco(tipo) {
+  if (!state.perfil) return 20;
+  const lesoes = state.perfil.lesoes || [];
+  const base = lesoes.includes(tipo) ? 45 : 20;
+  const sonoFactor = state.perfil.sono < 6 ? 15 : state.perfil.sono < 7 ? 7 : 0;
+  const stressFactor = state.perfil.stress === 'alto' ? 10 : state.perfil.stress === 'moderado' ? 5 : 0;
+  const nivelFactor = state.perfil.nivel === 'iniciante' ? 10 : 0;
+  return Math.min(95, base + sonoFactor + stressFactor + nivelFactor);
+}
+
+function calcularReadiness() {
+  if (!state.perfil) { state.readiness = null; return; }
+  const sonoScore = state.perfil.sono >= 8 ? 30 : state.perfil.sono >= 7 ? 25 : state.perfil.sono >= 6 ? 15 : 5;
+  const qualScore = {excelente:20,boa:16,regular:10,ruim:4}[state.perfil.sonoQual] || 10;
+  const stressScore = {baixo:30,moderado:20,alto:10}[state.perfil.stress] || 20;
+  state.readiness = Math.min(99, sonoScore + qualScore + stressScore + 15);
+}
+
+function renderReadiness() {
+  const r = state.readiness;
+  if (!r) return;
+  const el = document.getElementById('readiness-num');
+  el.textContent = r;
+  el.className = 'readiness-score ' + (r >= 70 ? 'green' : r >= 45 ? 'amber' : 'red');
+  document.getElementById('readiness-desc').textContent = r >= 70 ? 'Pronto para treinar' : r >= 45 ? 'Treino moderado' : 'Recuperação prioritária';
+  document.getElementById('stat-acwr').textContent = state.plano ? state.plano.acwr_estimado : '—';
+}
+
+// ============================================================
+// WEEK PLAN
+// ============================================================
+function renderWeek() {
+  const grid = document.getElementById('week-grid');
+  if (!state.semana.length) {
+    grid.innerHTML = '<div class="empty" style="grid-column:span 7"><div class="empty-text">Gere seu plano primeiro.</div></div>';
+    return;
+  }
+  const hoje = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'][new Date().getDay()];
+  grid.innerHTML = state.semana.map((d, i) => {
+    let cls = 'day-card';
+    if (d.descanso) cls += ' rest';
+    if (d.feito) cls += ' done';
+    if (d.perdido) cls += ' missed';
+    if (d.dia === hoje && !d.feito && !d.perdido) cls += ' today';
+    const icon = d.feito ? '✓' : d.perdido ? '✗' : d.descanso ? '—' : d.distancia > 0 ? d.distancia+'km' : '⬡';
+    const typeColor = d.descanso ? 'var(--text3)' : {Longo:'var(--green)',Intervalado:'var(--amber)',Tempo:'var(--amber)',Fácil:'var(--green)',Força:'#a78bfa'}[d.tipo] || 'var(--text2)';
+    return `<div class="${cls}" onclick="toggleDay(${i})">
+      <div class="day-name">${d.dia}</div>
+      <div class="day-type" style="color:${typeColor}">${d.tipo}</div>
+      <div class="day-dist">${icon}</div>
+    </div>`;
+  }).join('');
+}
+
+function toggleDay(i) {
+  const d = state.semana[i];
+  if (d.descanso) return;
+  if (!d.feito && !d.perdido) {
+    showDayDetail(i);
+    return;
+  }
+  if (d.feito) { d.feito = false; d.perdido = true; }
+  else if (d.perdido) { d.perdido = false; }
+  renderWeek();
+  atualizarDashboard();
+}
+
+function showDayDetail(i) {
+  const d = state.semana[i];
+  const detail = document.getElementById('day-detail');
+  detail.style.display = 'block';
+  document.getElementById('day-detail-content').innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
+      <div>
+        <div style="font-size:16px;font-weight:500;color:var(--text);margin-bottom:4px">${d.dia} — ${d.tipo}</div>
+        <div style="font-size:13px;color:var(--text2)">${d.distancia > 0 ? d.distancia + ' km · ' + d.zonas : 'Sem corrida'}</div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-secondary" style="font-size:12px;padding:6px 12px" onclick="marcarDia(${i},'feito')">✓ Feito</button>
+        <button class="btn btn-secondary" style="font-size:12px;padding:6px 12px;color:var(--red);border-color:rgba(248,113,113,0.3)" onclick="marcarDia(${i},'perdido')">✗ Não fiz</button>
+      </div>
+    </div>
+    <div style="font-size:13px;color:var(--text);line-height:1.7">${d.descricao}</div>
+  `;
+}
+
+function marcarDia(i, status) {
+  state.semana[i].feito = status === 'feito';
+  state.semana[i].perdido = status === 'perdido';
+  document.getElementById('day-detail').style.display = 'none';
+  renderWeek();
+  atualizarDashboard();
+  saveCurrentProfile();
+}
+
+async function recalcularPlano() {
+  if (!state.plano || !state.perfil) return;
+  const perdidos = state.semana.filter(d => d.perdido).map(d => d.dia + ' (' + d.tipo + ')');
+  if (!perdidos.length) { alert('Marque os treinos perdidos primeiro clicando nos dias.'); return; }
+
+  document.getElementById('recalc-result').style.display = 'none';
+  const btn = event.currentTarget;
+  btn.disabled = true;
+  btn.textContent = 'Recalculando...';
+
+  const perdStr = perdidos.join(', ');
+  const prompt = `Você é um treinador de corrida especializado. Um atleta perdeu os seguintes treinos da semana: ${perdStr}.
+
+Perfil do atleta:
+- Nível: ${state.perfil.nivel}
+- Objetivo: ${state.perfil.objetivo}
+- Dias disponíveis: ${state.perfil.dias}/semana
+- Histórico de lesões: ${(state.perfil.lesoes||[]).join(', ') || 'nenhuma'}
+
+Plano original: ${JSON.stringify(state.semana)}
+ACWR atual estimado: ${state.plano.acwr_estimado}
+
+Explique em 3-4 parágrafos curtos:
+1. O impacto dos treinos perdidos na carga semanal e no ACWR
+2. Como redistribuir a carga de forma segura nos dias restantes (seja específico com os dias)
+3. Alertas de risco: o que NÃO fazer para compensar
+4. Uma referência científica justificando a decisão (pode citar Gabbett 2016, Bompa, ou outro relevante)
+
+Seja direto, prático e baseado em evidência. Máximo 200 palavras.`;
+
+  try {
+    const resp = await callClaude(prompt);
+    document.getElementById('recalc-text').textContent = resp;
+    document.getElementById('recalc-result').style.display = 'block';
+  } catch(e) {
+    document.getElementById('recalc-text').textContent = 'Erro ao conectar com a IA. Verifique sua conexão.';
+    document.getElementById('recalc-result').style.display = 'block';
+  }
+  btn.disabled = false;
+  btn.textContent = '↺ Recalcular plano';
+}
+
+// ============================================================
+// GERAR TREINO
+// ============================================================
+async function gerarTreino() {
+  if (!state.perfil) { alert('Complete seu perfil primeiro.'); return; }
+  const energia = document.getElementById('gen-energia').value;
+  const dor = document.getElementById('gen-dor').value;
+  const tipo = document.getElementById('gen-tipo').value;
+  const tempo = document.getElementById('gen-tempo').value;
+  const extra = document.getElementById('gen-extra').value;
+
+  document.getElementById('treino-result').style.display = 'none';
+  document.getElementById('treino-thinking').style.display = 'flex';
+
+  const prompt = `Você é um treinador de corrida baseado em ciência. Crie uma sessão de treino personalizada.
+
+Perfil do atleta:
+- Nome: ${state.perfil.nome}
+- Nível: ${state.perfil.nivel}
+- Objetivo: ${state.perfil.objetivo}
+- Histórico de lesões: ${(state.perfil.lesoes||[]).join(', ') || 'nenhuma'}
+
+Estado hoje:
+- Energia: ${energia}
+- Dor/desconforto: ${dor}
+- Tipo desejado: ${tipo}
+- Tempo disponível: ${tempo} minutos
+${extra ? '- Informações extras: ' + extra : ''}
+
+ACWR atual: ${state.plano?.acwr_estimado || 'não calculado'}
+Score de readiness: ${state.readiness || 'não calculado'}/80
+
+Crie uma sessão de treino detalhada com:
+1. Nome e tipo da sessão
+2. Aquecimento (com duração)
+3. Parte principal (detalhada, com pace/zona, repetições se necessário)
+4. Volta à calma
+5. Alerta de risco específico para o histórico de lesões (se aplicável)
+6. 1 referência científica que embase a sessão (ex: Seiler et al., Midgley et al., Gabbett, etc.)
+
+Se a condição do atleta hoje não for ideal para treino intenso, adapte ou sugira algo mais leve e explique o porquê com base em ciência.
+Seja prático, específico, máximo 250 palavras.`;
+
+  try {
+    const resp = await callClaude(prompt);
+    document.getElementById('treino-text').textContent = resp;
+    document.getElementById('treino-result').style.display = 'block';
+  } catch(e) {
+    document.getElementById('treino-text').textContent = 'Erro ao gerar treino. Verifique sua conexão.';
+    document.getElementById('treino-result').style.display = 'block';
+  }
+  document.getElementById('treino-thinking').style.display = 'none';
+}
+
+// ============================================================
+// SONO
+// ============================================================
+async function registrarSono() {
+  const horas = parseFloat(document.getElementById('sono-hoje').value);
+  const qual = parseInt(document.getElementById('sono-qual').value);
+  const energia = document.getElementById('sono-energia').value;
+  const hrv = document.getElementById('sono-hrv').value;
+
+  state.sonoHistory.push({ horas, qual, energia, hrv, data: new Date().toLocaleDateString('pt-BR') });
+  renderSleepHistory();
+  saveCurrentProfile();
+
+  // recalculate readiness with new sleep
+  if (state.perfil) {
+    state.perfil.sono = horas;
+    state.perfil.sonoQual = ['','ruim','ruim','regular','boa','excelente'][qual] || 'regular';
+    calcularReadiness();
+    renderReadiness();
+  }
+
+  document.getElementById('sono-result').style.display = 'none';
+  document.getElementById('sono-thinking').style.display = 'flex';
+
+  const prompt = `Você é um especialista em medicina esportiva e recuperação. Analise estes dados de sono de um corredor:
+
+Horas dormidas: ${horas}h
+Qualidade subjetiva: ${qual}/5
+Energia ao acordar: ${energia}
+${hrv ? 'HRV: ' + hrv + ' ms' : 'HRV: não medido'}
+
+Perfil do corredor:
+- Nível: ${state.perfil?.nivel || 'não informado'}
+- Objetivo: ${state.perfil?.objetivo || 'não informado'}
+- Histórico de lesões: ${(state.perfil?.lesoes||[]).join(', ') || 'nenhuma'}
+- Score de readiness atual: ${state.readiness || '—'}/80
+
+Responda em 3 partes curtas:
+1. Avaliação da recuperação (1 parágrafo)
+2. Impacto no treino de hoje: deve fazer o treino planejado, adaptar ou descansar? Por quê?
+3. Dica prática baseada em evidência para melhorar sono/recuperação para corredores (cite referência: Walker 2017, Halson 2014, ou similar)
+
+Máximo 180 palavras. Tom direto e prático.`;
+
+  try {
+    const resp = await callClaude(prompt);
+    document.getElementById('sono-text').textContent = resp;
+    document.getElementById('sono-result').style.display = 'block';
+  } catch(e) {
+    document.getElementById('sono-text').textContent = 'Erro ao analisar. Verifique sua conexão.';
+    document.getElementById('sono-result').style.display = 'block';
+  }
+  document.getElementById('sono-thinking').style.display = 'none';
+}
+
+function renderSleepHistory() {
+  const grid = document.getElementById('sleep-history');
+  const dias = ['S','M','T','Q','Q','S','S'];
+  const colors = ['#ef4444','#f87171','#fbbf24','#4ade80','#22c55e'];
+  grid.innerHTML = Array(7).fill(0).map((_, i) => {
+    const s = state.sonoHistory[state.sonoHistory.length - 7 + i];
+    if (!s) {
+      return `<div class="sleep-dot" style="background:var(--surface2);border:1px solid var(--border)">${dias[i]}</div>`;
+    }
+    const col = colors[Math.min(4, Math.max(0, s.qual - 1))];
+    return `<div class="sleep-dot" style="background:${col}22;border:1px solid ${col}44;color:${col}" title="${s.horas}h · qual:${s.qual}">${s.horas}</div>`;
+  }).join('');
+}
+
+// ============================================================
+// LESÃO
+// ============================================================
+function renderLesaoPage() {
+  if (!state.perfil || !state.plano) return;
+  const score = calcRisco('geral_score');
+  document.getElementById('lesao-score').textContent = score;
+  const scoreEl = document.getElementById('lesao-score');
+  scoreEl.style.color = score > 60 ? 'var(--red)' : score > 35 ? 'var(--amber)' : 'var(--green)';
+  document.getElementById('lesao-score-desc').textContent = score > 60 ? '⚠️ Risco elevado — reduza carga' : score > 35 ? '⚡ Monitorar — treino moderado' : '✓ Risco baixo';
+  document.getElementById('lesao-acwr').textContent = state.plano.acwr_estimado || '—';
+
+  const lesoes = [
+    {nome:'Síndrome iliotibial', tipo:'iliotibial', paper:'Fredericson & Wolf, 2005'},
+    {nome:'Fascite plantar', tipo:'fascite', paper:'Riddle & Schappert, 2004'},
+    {nome:'Tendinopatia patelar', tipo:'patelar', paper:'Lian et al., 2005'},
+    {nome:'Periostite tibial', tipo:'periostite', paper:'Moen et al., 2012'},
+    {nome:'Tendinopatia de Aquiles', tipo:'aquiles', paper:'Magnussen et al., 2009'},
+  ];
+
+  document.getElementById('lesao-riscos').innerHTML = lesoes.map(l => {
+    const v = calcRisco(l.tipo);
+    const col = v > 60 ? 'var(--red)' : v > 35 ? 'var(--amber)' : 'var(--green)';
+    return `<div class="risk-item">
+      <div class="risk-row">
+        <div>
+          <div class="risk-name">${l.nome}</div>
+          <div style="font-size:10px;font-family:'DM Mono',monospace;color:var(--text3)">${l.paper}</div>
+        </div>
+        <span class="risk-pct" style="color:${col}">${v}%</span>
+      </div>
+      <div class="risk-track"><div class="risk-fill" style="width:${v}%;background:${col}"></div></div>
+    </div>`;
+  }).join('');
+}
+
+// override calcRisco for general
+const origCalcRisco = calcRisco;
+window.calcRisco = function(tipo) {
+  if (tipo === 'geral_score') {
+    if (!state.perfil) return 25;
+    const base = (state.perfil.lesoes||[]).length > 0 ? 40 : 22;
+    const s = state.perfil.sono < 6 ? 20 : state.perfil.sono < 7 ? 10 : 0;
+    const st = state.perfil.stress === 'alto' ? 15 : state.perfil.stress === 'moderado' ? 7 : 0;
+    const n = state.perfil.nivel === 'iniciante' ? 12 : 0;
+    return Math.min(95, base + s + st + n);
+  }
+  return origCalcRisco(tipo);
+};
+
+async function analisarRisco() {
+  if (!state.perfil) { alert('Complete seu perfil primeiro.'); return; }
+  const dist = document.getElementById('risk-dist').value;
+  const intens = document.getElementById('risk-int').value;
+  if (!dist) { alert('Informe a distância planejada.'); return; }
+
+  document.getElementById('risco-result').style.display = 'none';
+  document.getElementById('risco-thinking').style.display = 'flex';
+
+  const prompt = `Você é um especialista em medicina esportiva. Analise o risco de lesão desta sessão:
+
+Sessão planejada:
+- Distância: ${dist} km
+- Intensidade: ${intens}
+
+Perfil do atleta:
+- Nível: ${state.perfil.nivel}
+- Volume base atual: ${state.perfil.base}
+- Histórico de lesões: ${(state.perfil.lesoes||[]).join(', ') || 'nenhuma'}
+- Sono recente: ${state.perfil.sono}h (${state.perfil.sonoQual})
+- Estresse: ${state.perfil.stress}
+- ACWR estimado: ${state.plano?.acwr_estimado || 'não calculado'}
+- Score de readiness: ${state.readiness || '—'}/80
+
+Forneça:
+1. Score de risco para esta sessão específica (0–100%) com justificativa
+2. Quais lesões específicas são mais prováveis dado o perfil (máx 3)
+3. Recomendação: fazer como planejado / adaptar / não fazer — com explicação baseada em ciência
+4. Se recomendar adaptar: como? (pace, distância, intensidade)
+5. Referência científica principal (Gabbett, Van Gent, Nielsen, ou similar)
+
+Máximo 200 palavras. Seja direto e preciso.`;
+
+  try {
+    const resp = await callClaude(prompt);
+    document.getElementById('risco-text').textContent = resp;
+    document.getElementById('risco-result').style.display = 'block';
+  } catch(e) {
+    document.getElementById('risco-text').textContent = 'Erro ao analisar. Verifique sua conexão.';
+    document.getElementById('risco-result').style.display = 'block';
+  }
+  document.getElementById('risco-thinking').style.display = 'none';
+}
+
+// ============================================================
+// FORTALECIMENTO
+// ============================================================
+async function gerarForca() {
+  if (!state.perfil) { alert('Complete seu perfil primeiro.'); return; }
+  const foco = document.getElementById('forca-foco').value;
+  const tempo = document.getElementById('forca-tempo').value;
+  const equip = document.getElementById('forca-equip').value;
+
+  document.getElementById('forca-result').style.display = 'none';
+  document.getElementById('forca-thinking').style.display = 'flex';
+
+  const prompt = `Você é um fisioterapeuta esportivo especializado em corrida. Crie um protocolo de fortalecimento.
+
+Dados do atleta:
+- Nível: ${state.perfil.nivel}
+- Histórico de lesões: ${(state.perfil.lesoes||[]).join(', ') || 'nenhuma'}
+- Foco da sessão: ${foco}
+- Tempo disponível: ${tempo} minutos
+- Equipamentos: ${equip}
+
+Crie um protocolo com:
+1. Objetivo da sessão (1 linha)
+2. Aquecimento (2 min): exercício específico
+3. Bloco principal: liste 4-6 exercícios com:
+   - Nome do exercício
+   - Séries × Repetições (ou tempo)
+   - Cue de execução principal (1 frase)
+   - Por que é importante para corredores (1 frase)
+4. Progressão: como avançar nas próximas 4 semanas
+5. Referência científica principal (Fredericson, Niemuth, Ferber, ou similar)
+
+Para lesões no histórico, priorize exercícios preventivos específicos para essa lesão.
+Máximo 280 palavras. Formato prático e legível.`;
+
+  try {
+    const resp = await callClaude(prompt);
+    document.getElementById('forca-text').textContent = resp;
+    document.getElementById('forca-result').style.display = 'block';
+  } catch(e) {
+    document.getElementById('forca-text').textContent = 'Erro ao gerar treino. Verifique sua conexão.';
+    document.getElementById('forca-result').style.display = 'block';
+  }
+  document.getElementById('forca-thinking').style.display = 'none';
+}
+
+// ============================================================
+// PERFIL PAGE
+// ============================================================
+function renderPerfil() {
+  if (!state.perfil) return;
+  const p = state.perfil;
+  const obj = {saude:'Saúde & bem-estar',5:'5K','5k':'5K','10k':'10K',meia:'Meia-maratona',maratona:'Maratona',performance:'Performance'}[p.objetivo] || p.objetivo;
+  const nivel = {iniciante:'Iniciante',intermediario:'Intermediário',avancado:'Avançado'}[p.nivel] || p.nivel;
+  document.getElementById('perfil-display').innerHTML = `
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px">
+      <div style="width:52px;height:52px;border-radius:50%;background:var(--green-bg);border:1px solid rgba(74,222,128,0.3);display:flex;align-items:center;justify-content:center;font-size:20px">🏃</div>
+      <div>
+        <div style="font-size:19px;font-family:'DM Serif Display',serif;color:var(--text)">${p.nome}</div>
+        <div style="font-size:13px;color:var(--text2)">${nivel} · ${obj}</div>
+      </div>
+    </div>
+    <hr class="sep" style="margin:0 0 16px">
+    <div class="grid-2">
+      <div><div class="stat-label">Dias/semana</div><div style="font-size:20px;font-family:'DM Serif Display',serif">${p.dias}</div></div>
+      <div><div class="stat-label">Volume base</div><div style="font-size:15px;color:var(--text2)">${p.base}</div></div>
+      <div><div class="stat-label">Sono médio</div><div style="font-size:20px;font-family:'DM Serif Display',serif">${p.sono}h</div></div>
+      <div><div class="stat-label">Pisada</div><div style="font-size:15px;color:var(--text2)">${p.pisada}</div></div>
+    </div>
+    ${p.wearables&&p.wearables.length>0 ? `
+    <hr class="sep" style="margin:16px 0">
+    <div class="stat-label" style="margin-bottom:8px">Wearables</div>
+    <div class="tag-row">${p.wearables.map(w=>'<span class="badge badge-green">'+w+'</span>').join('')}</div>
+    ` : ''}
+    ${p.lesoes&&p.lesoes.length>0&&!p.lesoes.includes('nenhuma') ? `
+    <hr class="sep" style="margin:16px 0">
+    <div class="stat-label" style="margin-bottom:8px">Histórico de lesões</div>
+    <div class="tag-row">${p.lesoes.map(l=>'<span class="badge badge-amber">'+l+'</span>').join('')}</div>
+    ` : ''}
+    <hr class="sep" style="margin:16px 0 14px">
+    <div style="font-size:12px;color:var(--text3);font-family:'DM Mono',monospace">Readiness atual: <span style="color:${state.readiness>=70?'var(--green)':state.readiness>=45?'var(--amber)':'var(--red)'}">${state.readiness||'—'}/80</span></div>
+    <button class="btn btn-secondary" style="margin-top:16px;font-size:12px" onclick="navigate('onboarding')">✎ Editar perfil</button>
+  `;
+}
+
+// ============================================================
+// CLAUDE API
+// ============================================================
+async function callClaude(prompt) {
+  const langName = (typeof LANG_NAMES !== 'undefined' ? LANG_NAMES[currentLang] : null) || 'Portuguese';
+  const systemPrompt = `You are an expert in sports science, running training, and injury prevention. Always respond in ${langName}. Base your answers on scientific evidence. Be direct and practical. When citing papers use format: Author(s), year.`;
+  const isNetlify = window.location.hostname.includes('netlify.app');
+  const isVercel = window.location.hostname.includes('vercel.app') || window.location.hostname.includes('localhost');
+  if (isNetlify || isVercel) {
+    const apiUrl = isNetlify ? '/.netlify/functions/claude' : '/api/claude';
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt: systemPrompt + '\n\n' + prompt })
+    });
+    if (!response.ok) throw new Error('API error: ' + response.status);
+    const text = await response.text();
+    let data;
+    try { data = JSON.parse(text); } catch(e) { throw new Error('Parse error: ' + text.slice(0,100)); }
+    if (data.error) throw new Error(data.error);
+    if (data.content && Array.isArray(data.content)) return data.content.map(b => b.text || '').join('');
+    if (typeof data === 'string') return data;
+    throw new Error('Unexpected response format');
+  } else {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    if (!response.ok) throw new Error('API error: ' + response.status);
+    const data = await response.json();
+    return data.content.map(b => b.text || '').join('');
+  }
+}
+
+
+// ============================================================
+// STRAVA INTEGRATION
+// ============================================================
+const STRAVA = {
+  token: null,
+  athlete: null,
+  activities: [],
+  stats: null
+};
+
+const STRAVA_SCOPE = 'read,activity:read_all,profile:read_all';
+const STRAVA_AUTH_URL = 'https://www.strava.com/oauth/authorize';
+const STRAVA_TOKEN_URL = 'https://www.strava.com/oauth/token';
+
+function toggleSecret() {
+  const inp = document.getElementById('strava-client-secret');
+  const btn = event.currentTarget;
+  if (inp.type === 'password') { inp.type = 'text'; btn.textContent = 'ocultar'; }
+  else { inp.type = 'password'; btn.textContent = 'mostrar'; }
+}
+
+function connectStrava() {
+  const clientId = document.getElementById('strava-client-id').value.trim();
+  if (!clientId) { alert('Informe o Client ID do seu app Strava.'); return; }
+  const secret = document.getElementById('strava-client-secret').value.trim();
+  if (!secret) { alert('Informe o Client Secret do seu app Strava.'); return; }
+
+  // Save credentials temporarily for the callback
+  localStorage.setItem('stride_strava_client_id', clientId);
+  localStorage.setItem('stride_strava_client_secret', secret);
+
+  const redirectUri = window.location.href.split('?')[0].split('#')[0];
+  const url = `${STRAVA_AUTH_URL}?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&approval_prompt=auto&scope=${STRAVA_SCOPE}`;
+  window.location.href = url;
+}
+
+async function handleStravaCallback() {
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get('code');
+  const error = params.get('error');
+  if (error) { alert('Autorização negada pelo Strava: ' + error); cleanUrl(); return; }
+  if (!code) return;
+
+  const clientId = localStorage.getItem('stride_strava_client_id');
+  const clientSecret = localStorage.getItem('stride_strava_client_secret');
+  if (!clientId || !clientSecret) { alert('Credenciais não encontradas. Tente conectar novamente.'); cleanUrl(); return; }
+
+  // Navigate to integrations page to show loading state
+  navigate('integracoes');
+  showStravaLoading('Trocando código por token...');
+
+  try {
+    const res = await fetch(STRAVA_TOKEN_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ client_id: clientId, client_secret: clientSecret, code, grant_type: 'authorization_code' })
+    });
+    const data = await res.json();
+    if (!res.ok || !data.access_token) throw new Error(data.message || 'Falha na autenticação');
+    STRAVA.token = data.access_token;
+    STRAVA.athlete = data.athlete;
+    localStorage.setItem('stride_strava_token', data.access_token);
+    localStorage.setItem('stride_strava_refresh', data.refresh_token);
+    localStorage.setItem('stride_strava_expires', data.expires_at);
+    localStorage.setItem('stride_strava_athlete', JSON.stringify(data.athlete));
+    cleanUrl();
+    await loadStravaData();
+  } catch(e) {
+    alert('Erro ao autenticar com Strava: ' + e.message);
+    cleanUrl();
+    hideStravaLoading();
+  }
+}
+
+async function connectWithToken() {
+  const token = document.getElementById('strava-manual-token').value.trim();
+  if (!token) { alert('Cole seu access token.'); return; }
+  STRAVA.token = token;
+  localStorage.setItem('stride_strava_token', token);
+  showStravaLoading('Verificando token...');
+  await loadStravaData();
+}
+
+async function loadStravaData() {
+  showStravaLoading('Buscando perfil...');
+  try {
+    // Fetch athlete
+    const athRes = await fetch('https://www.strava.com/api/v3/athlete', {
+      headers: { 'Authorization': 'Bearer ' + STRAVA.token }
+    });
+    if (!athRes.ok) throw new Error('Token inválido ou expirado (HTTP ' + athRes.status + ')');
+    STRAVA.athlete = await athRes.json();
+
+    showStravaLoading('Importando atividades...');
+    // Fetch last 30 days, single request, max 30 activities, with timeout
+    const since = Math.floor(Date.now()/1000) - 30*24*60*60;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+    let allActs = [];
+    try {
+      const actsRes = await fetch(
+        `https://www.strava.com/api/v3/athlete/activities?after=${since}&per_page=30&page=1`,
+        { headers: { 'Authorization': 'Bearer ' + STRAVA.token }, signal: controller.signal }
+      );
+      clearTimeout(timeout);
+      if (!actsRes.ok) throw new Error('HTTP ' + actsRes.status);
+      allActs = await actsRes.json();
+    } catch(e) {
+      clearTimeout(timeout);
+      if (e.name === 'AbortError') {
+        allActs = [];
+      } else {
+        throw e;
+      }
+    }
+    // Filter runs only
+    STRAVA.activities = Array.isArray(allActs) ? allActs.filter(a => a.type === 'Run' || a.sport_type === 'Run') : [];
+    renderStravaConnected();
+  } catch(e) {
+    hideStravaLoading();
+    alert('Erro ao carregar dados do Strava: ' + e.message);
+    STRAVA.token = null;
+    localStorage.removeItem('stride_strava_token');
+  }
+}
+
+function renderStravaConnected() {
+  const acts = STRAVA.activities;
+  const athlete = STRAVA.athlete;
+
+  // Summary stats
+  const now = Date.now();
+  const last7 = acts.filter(a => (now - new Date(a.start_date).getTime()) < 7*24*60*60*1000);
+  const last28 = acts.filter(a => (now - new Date(a.start_date).getTime()) < 28*24*60*60*1000);
+  const kmLast7 = last7.reduce((s,a) => s + a.distance/1000, 0);
+  const kmLast28 = last28.reduce((s,a) => s + a.distance/1000, 0);
+  const avgPace = acts.length ? acts.slice(0,10).reduce((s,a) => {
+    const pace = a.moving_time / (a.distance/1000);
+    return s + pace;
+  }, 0) / Math.min(acts.length,10) : 0;
+
+  // ACWR real
+  const acuteLoad = kmLast7;
+  const chronicLoad = kmLast28 / 4;
+  const acwr = chronicLoad > 0 ? (acuteLoad / chronicLoad).toFixed(2) : '—';
+
+  // Update state with real data
+  if (state.perfil) {
+    state.perfil.stravaVolume7 = Math.round(kmLast7 * 10) / 10;
+    state.perfil.stravaVolume28 = Math.round(kmLast28 * 10) / 10;
+    state.perfil.stravaACWR = acwr;
+    state.perfil.stravaActivities = acts.length;
+    if (chronicLoad > 0) {
+      state.plano && (state.plano.acwr_estimado = acwr);
+    }
+  }
+
+  // Show connected UI
+  document.getElementById('strava-disconnected').style.display = 'none';
+  document.getElementById('strava-connected').style.display = 'block';
+  document.getElementById('strava-status-badge').textContent = 'Conectado';
+  document.getElementById('strava-status-badge').className = 'badge badge-green';
+  document.getElementById('strava-dot').style.display = 'block';
+
+  const name = athlete ? (athlete.firstname + ' ' + athlete.lastname).trim() : 'Atleta';
+  document.getElementById('strava-athlete-name').textContent = '✓ Conectado como ' + name;
+
+  document.getElementById('strava-summary-stats').innerHTML = `
+    <div class="stat-card">
+      <div class="stat-label">Volume 7 dias</div>
+      <div class="stat-value">${Math.round(kmLast7)}<span class="stat-unit">km</span></div>
+      <div class="stat-delta good">${last7.length} corridas</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Volume 28 dias</div>
+      <div class="stat-value">${Math.round(kmLast28)}<span class="stat-unit">km</span></div>
+      <div class="stat-delta good">${last28.length} corridas</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">ACWR real</div>
+      <div class="stat-value" style="color:${acwr>1.3?'var(--red)':acwr<0.8?'var(--amber)':'var(--green)'}">${acwr}</div>
+      <div class="stat-delta ${acwr>1.3?'bad':acwr<0.8?'warn':'good'}">${acwr>1.3?'⚠ Zona de risco':acwr<0.8?'↓ Abaixo do ideal':'✓ Zona segura'}</div>
+    </div>
+  `;
+
+  // Activity list (last 8)
+  const recent = acts.slice(0, 8);
+  document.getElementById('strava-activities-list').innerHTML = recent.length ? recent.map(a => {
+    const date = new Date(a.start_date).toLocaleDateString('pt-BR', {day:'2-digit',month:'short'});
+    const km = (a.distance/1000).toFixed(1);
+    const pace = a.average_speed > 0 ? formatPace(a.average_speed) : '—';
+    const hr = a.has_heartrate ? a.average_heartrate + ' bpm' : '—';
+    return `<div class="activity-row">
+      <div>
+        <div class="activity-name">${a.name}</div>
+        <div class="activity-meta">${date} · ${a.type}</div>
+      </div>
+      <div class="activity-stats">
+        <div><div class="activity-stat-val">${km}</div><div class="activity-stat-lbl">km</div></div>
+        <div><div class="activity-stat-val">${pace}</div><div class="activity-stat-lbl">pace</div></div>
+        <div><div class="activity-stat-val">${hr}</div><div class="activity-stat-lbl">FC média</div></div>
+      </div>
+    </div>`;
+  }).join('') : '<div class="empty"><div class="empty-text">Nenhuma corrida encontrada nos últimos 30 dias.</div></div>';
+}
+
+function formatPace(metersPerSec) {
+  if (!metersPerSec || metersPerSec === 0) return '—';
+  const secPerKm = 1000 / metersPerSec;
+  const min = Math.floor(secPerKm / 60);
+  const sec = Math.round(secPerKm % 60).toString().padStart(2,'0');
+  return `${min}:${sec}/km`;
+}
+
+async function usarDadosStrava() {
+  if (!state.perfil) { alert('Complete o perfil primeiro.'); return; }
+  const acts = STRAVA.activities;
+  if (!acts.length) { alert('Nenhuma atividade encontrada.'); return; }
+
+  document.getElementById('strava-ai-result').style.display = 'none';
+  document.getElementById('strava-ai-thinking').style.display = 'flex';
+
+  const now = Date.now();
+  const last28 = acts.filter(a => (now - new Date(a.start_date).getTime()) < 28*24*60*60*1000);
+  const kmSemanas = [0,1,2,3].map(w => {
+    const wActs = acts.filter(a => {
+      const diff = (now - new Date(a.start_date).getTime()) / (24*60*60*1000);
+      return diff >= w*7 && diff < (w+1)*7;
+    });
+    return Math.round(wActs.reduce((s,a) => s+a.distance/1000, 0));
+  });
+  const paces = acts.slice(0,10).filter(a=>a.average_speed>0).map(a => formatPace(a.average_speed));
+  const hasHR = acts.some(a => a.has_heartrate);
+  const avgHR = hasHR ? Math.round(acts.filter(a=>a.has_heartrate).reduce((s,a)=>s+a.average_heartrate,0)/acts.filter(a=>a.has_heartrate).length) : null;
+
+  const prompt = `Você é um treinador de corrida especializado. Analise este histórico real de corridas do Strava e gere recomendações para o plano de treino.
+
+DADOS DO ATLETA:
+- Nome: ${state.perfil.nome}
+- Objetivo: ${state.perfil.objetivo}
+- Histórico de lesões: ${(state.perfil.lesoes||[]).join(', ') || 'nenhuma'}
+
+HISTÓRICO STRAVA (últimos 28 dias):
+- Volume semana atual (mais recente): ${kmSemanas[0]} km
+- Volume semana -1: ${kmSemanas[1]} km  
+- Volume semana -2: ${kmSemanas[2]} km
+- Volume semana -3: ${kmSemanas[3]} km
+- ACWR calculado: ${state.perfil.stravaACWR}
+- Total de corridas nos últimos 28 dias: ${last28.length}
+- Paces recentes (últimas 10 corridas): ${paces.slice(0,5).join(', ')}
+${avgHR ? `- FC média nas corridas: ${avgHR} bpm` : ''}
+
+Forneça:
+1. Análise da carga atual e tendência de volume (2-3 frases)
+2. ACWR real: o que isso significa para o atleta agora?
+3. Volume recomendado para a PRÓXIMA semana (em km), com justificativa baseada em Gabbett 2016
+4. Distribuição ideal: quantos km em cada tipo de treino (longo, fácil, intenso)
+5. Principal alerta de risco baseado nos dados reais
+6. Como estes dados alteram o plano gerado anteriormente (se houver)
+
+Máximo 250 palavras. Seja específico com números.`;
+
+  try {
+    const resp = await callClaude(prompt);
+    document.getElementById('strava-ai-text').textContent = resp;
+    document.getElementById('strava-ai-result').style.display = 'block';
+    // Update plan ACWR in dashboard
+    if (state.plano) {
+      state.plano.acwr_estimado = state.perfil.stravaACWR;
+      atualizarDashboard();
+    }
+  } catch(e) {
+    document.getElementById('strava-ai-text').textContent = 'Erro ao analisar. Verifique sua conexão.';
+    document.getElementById('strava-ai-result').style.display = 'block';
+  }
+  document.getElementById('strava-ai-thinking').style.display = 'none';
+}
+
+async function syncStrava() {
+  if (!STRAVA.token) return;
+  showStravaLoading('Sincronizando...');
+  await loadStravaData();
+}
+
+function disconnectStrava() {
+  STRAVA.token = null; STRAVA.athlete = null; STRAVA.activities = [];
+  localStorage.removeItem('stride_strava_token');
+  localStorage.removeItem('stride_strava_refresh');
+  localStorage.removeItem('stride_strava_expires');
+  localStorage.removeItem('stride_strava_athlete');
+  localStorage.removeItem('stride_strava_client_id');
+  localStorage.removeItem('stride_strava_client_secret');
+  document.getElementById('strava-disconnected').style.display = 'block';
+  document.getElementById('strava-connected').style.display = 'none';
+  document.getElementById('strava-status-badge').textContent = 'Não conectado';
+  document.getElementById('strava-status-badge').className = 'badge badge-dim';
+  document.getElementById('strava-dot').style.display = 'none';
+}
+
+function showStravaLoading(msg) {
+  document.getElementById('strava-disconnected').style.display = 'none';
+  document.getElementById('strava-connected').style.display = 'none';
+  const el = document.getElementById('strava-card');
+  let ld = document.getElementById('strava-loading');
+  if (!ld) {
+    ld = document.createElement('div');
+    ld.id = 'strava-loading';
+    ld.className = 'ai-thinking';
+    ld.innerHTML = '<div class="dot-pulse"><span></span><span></span><span></span></div><span id="strava-loading-msg"></span>';
+    el.appendChild(ld);
+  }
+  ld.style.display = 'flex';
+  document.getElementById('strava-loading-msg').textContent = msg;
+}
+
+function hideStravaLoading() {
+  const ld = document.getElementById('strava-loading');
+  if (ld) ld.style.display = 'none';
+  document.getElementById('strava-disconnected').style.display = 'block';
+}
+
+function cleanUrl() {
+  const clean = window.location.href.split('?')[0].split('#')[0];
+  window.history.replaceState({}, document.title, clean);
+}
+
+// Check for Strava OAuth callback or saved token on load
+
+// ============================================================
+// BASE CIENTÍFICA — PAPERS
+// ============================================================
+const PAPERS = [
+  {
+    id: 1, cat: 'carga',
+    tag: 'paper-tag-carga', tagLabel: 'Carga & ACWR',
+    title: 'The training—injury prevention paradox: should athletes be training smarter and harder?',
+    authors: 'Gabbett, T.J.',
+    journal: 'British Journal of Sports Medicine, 50(5), 273–280',
+    year: 2016,
+    doi: 'https://doi.org/10.1136/bjsports-2015-095788',
+    keywords: ['acwr','carga','lesão','overtraining','gabbett'],
+    resumo: 'Este é o paper mais influente sobre carga de treinamento e risco de lesão. Gabbett introduziu e validou o conceito de ACWR (Acute:Chronic Workload Ratio) — a razão entre a carga da semana atual e a média das 4 semanas anteriores. A zona segura fica entre 0.8 e 1.3; acima de 1.5, o risco de lesão aumenta exponencialmente. O paradoxo do título é que atletas bem treinados (alta carga crônica) toleram picos de carga aguda melhor do que atletas descondicionados.',
+    aplicacao: 'O Stride usa o ACWR como métrica central para recalcular o plano quando treinos são perdidos e para emitir alertas de risco antes de cada sessão.'
+  },
+  {
+    id: 2, cat: 'lesao',
+    tag: 'paper-tag-lesao', tagLabel: 'Lesões',
+    title: 'Incidence and determinants of lower extremity running injuries in long distance runners: a systematic review',
+    authors: 'Van Gent, R.N. et al.',
+    journal: 'British Journal of Sports Medicine, 41(8), 469–480',
+    year: 2007,
+    doi: 'https://doi.org/10.1136/bjsm.2006.033548',
+    keywords: ['lesão','corrida','epidemiologia','joelho','iniciante','van gent'],
+    resumo: 'Revisão sistemática de 17 estudos com corredores de longa distância. Encontrou incidência de lesões entre 19% e 79% por ano. As lesões mais comuns foram: síndrome do trato iliotibial (22,7%), fascite plantar (14,1%), tendinopatia patelar (13,5%) e periostite tibial (10,5%). Corredores iniciantes com menos de 2 anos de prática tiveram risco significativamente maior, confirmando que volume isolado não define nível — o tecido conjuntivo demora mais para adaptar.',
+    aplicacao: 'Fundamenta o mapeamento das lesões mais comuns no onboarding e o cálculo de risco por tipo de lesão. Justifica a distinção entre nível baseado em tempo de prática vs. volume.'
+  },
+  {
+    id: 3, cat: 'lesao',
+    tag: 'paper-tag-lesao', tagLabel: 'Lesões',
+    title: 'Iliotibial band syndrome in runners: innovations in treatment',
+    authors: 'Fredericson, M. & Wolf, C.',
+    journal: 'Sports Medicine, 35(5), 451–459',
+    year: 2005,
+    doi: 'https://doi.org/10.2165/00007256-200535050-00006',
+    keywords: ['sbit','iliotibial','banda','joelho','lateral','fredericson','ciclismo'],
+    resumo: 'Revisão abrangente da síndrome da banda iliotibial, a lesão mais comum em corredores de longa distância. O paper identificou fraqueza de abdutores do quadril (glúteo médio) como o principal fator de risco modificável — mais relevante que o volume de corrida. Também observou que ciclistas têm desequilíbrio muscular que pode transferir-se para a corrida, aumentando risco de SBIT.',
+    aplicacao: 'Fundamenta o protocolo de fortalecimento de glúteo e quadril do Stride, e o alerta específico para usuários que também praticam ciclismo.'
+  },
+  {
+    id: 4, cat: 'treino',
+    tag: 'paper-tag-treino', tagLabel: 'Periodização',
+    title: 'Periodization: Theory and Methodology of Training (5th ed.)',
+    authors: 'Bompa, T.O. & Haff, G.G.',
+    journal: 'Human Kinetics',
+    year: 2009,
+    doi: null,
+    keywords: ['periodização','bompa','ciclos','progressão','volume','intensidade'],
+    resumo: 'Obra de referência em periodização do treinamento esportivo. Estabelece os princípios de progressão gradual de carga, alternância entre fases de acumulação, transformação e realização, e a importância de semanas de recuperação a cada 3-4 semanas de carga crescente. A regra dos 10% de aumento máximo semanal de volume é derivada desta obra.',
+    aplicacao: 'Estrutura base para a geração de planos semanais e mensais do Stride, incluindo a progressão de volume, tipos de sessão e distribuição de intensidade por zonas.'
+  },
+  {
+    id: 5, cat: 'carga',
+    tag: 'paper-tag-carga', tagLabel: 'Carga & ACWR',
+    title: 'A prospective study on starters and re-starters in recreational running',
+    authors: 'Buist, I. et al.',
+    journal: 'Scandinavian Journal of Medicine & Science in Sports, 20(6), 917–923',
+    year: 2010,
+    doi: 'https://doi.org/10.1111/j.1600-0838.2009.01001.x',
+    keywords: ['iniciante','recomeço','risco','progressão','buist'],
+    resumo: 'Estudo prospectivo com 532 corredores iniciantes e recomeçantes. Taxa de lesão de 28% no primeiro ano. O fator de risco mais significativo não foi o volume absoluto, mas a velocidade de progressão da carga. Corredores que aumentavam mais de 10% por semana tiveram 3x mais lesões. Também relevante: corredores que voltaram após lesão tiveram risco similar a iniciantes completos.',
+    aplicacao: 'Justifica a regra de progressão máxima de 10%/semana no Stride e o tratamento de corredores retornando de lesão como "quase iniciantes" no cálculo de risco.'
+  },
+  {
+    id: 6, cat: 'carga',
+    tag: 'paper-tag-carga', tagLabel: 'Carga & ACWR',
+    title: 'Mechanisms of sports injuries: a dynamic and complex interaction',
+    authors: 'Meeuwisse, W.H. et al.',
+    journal: 'Clinical Journal of Sport Medicine, 17(3), 215–219',
+    year: 2007,
+    doi: 'https://doi.org/10.1097/JSM.0b013e3180592a48',
+    keywords: ['lesão','tecido conjuntivo','adaptação','meeuwisse','biomecânica'],
+    resumo: 'Modelo dinâmico de lesão esportiva que demonstra que a adaptação de diferentes tecidos ocorre em velocidades distintas. O sistema cardiovascular e muscular adapta-se em 6-8 semanas; tendões e ligamentos, em 3-6 meses; osso cortical, em 6-12 meses. Este mismatch de adaptação é a principal causa de overuse injuries em corredores que progridem rápido.',
+    aplicacao: 'Fundamenta a classificação de nível por tempo de prática no Stride — um corredor de 6 meses com alto volume cardiovascular ainda tem tecido conjuntivo vulnerável.'
+  },
+  {
+    id: 7, cat: 'lesao',
+    tag: 'paper-tag-lesao', tagLabel: 'Lesões',
+    title: 'Plantar fasciitis: evidence-based review of diagnosis and therapy',
+    authors: 'Riddle, D.L. & Schappert, S.M.',
+    journal: 'Physical Therapy, 84(5), 488–503',
+    year: 2004,
+    doi: 'https://doi.org/10.1093/ptj/84.5.488',
+    keywords: ['fascite','plantar','pé','sola','tendão','riddle'],
+    resumo: 'Revisão baseada em evidências sobre fascite plantar, segunda lesão mais comum em corredores. Identifica fatores de risco principais: encurtamento do tríceps sural (panturrilha), IMC elevado, pisada supinada e aumento abrupto de volume. O tratamento mais eficaz combinando evidências é: alongamento excêntrico de panturrilha + exercícios de fortalecimento intrínseco do pé + redução de volume de 30-50%.',
+    aplicacao: 'Protocolo de fortalecimento específico para fascite plantar no Stride e alerta de risco elevado para usuários com histórico dessa lesão.'
+  },
+  {
+    id: 8, cat: 'prevencao',
+    tag: 'paper-tag-prevencao', tagLabel: 'Prevenção',
+    title: 'Effect of yoga on muscle strength and balance in healthy adults: a systematic review',
+    authors: 'Telles, S. et al.',
+    journal: 'International Journal of Yoga, 9(2), 97–102',
+    year: 2016,
+    doi: 'https://doi.org/10.4103/0973-6131.183712',
+    keywords: ['yoga','pilates','propriocepção','equilíbrio','força','prevenção','telles'],
+    resumo: 'Revisão sistemática de 12 estudos sobre o impacto do yoga em força muscular e equilíbrio. Praticantes regulares de yoga apresentaram melhora significativa em propriocepção, estabilidade de tornozelo e força de core — todos fatores protetivos contra lesões de corrida. Especificamente, a melhora de equilíbrio dinâmico em monopodal reduz risco de entorses e tendinopatias.',
+    aplicacao: 'Justifica a classificação de Yoga/Pilates como "esporte protetor" no perfil do Stride e a possibilidade de substituir sessões de força por sessões de yoga.'
+  },
+  {
+    id: 9, cat: 'lesao',
+    tag: 'paper-tag-lesao', tagLabel: 'Lesões',
+    title: 'Prevalence and risk factors associated with patellar tendinopathy in young athletes',
+    authors: 'Lian, O.B. et al.',
+    journal: 'American Journal of Sports Medicine, 33(7), 1012–1015',
+    year: 2005,
+    doi: 'https://doi.org/10.1177/0363546504270465',
+    keywords: ['patelar','joelho','tendinopatia','quadríceps','lian'],
+    resumo: 'Estudo de prevalência com 613 atletas de esportes de impacto. A tendinopatia patelar afetou 14,4% dos corredores amadores e 32% dos atletas de elite. Fatores de risco: fraqueza excêntrica de quadríceps, volume de saltos/impacto acumulado, e treinamento em superfícies duras. O protocolo excêntrico de Alfredson demonstrou 80% de eficácia em reabilitação.',
+    aplicacao: 'Protocolo excêntrico de fortalecimento de quadríceps nos treinos de força do Stride para usuários com histórico de tendinopatia patelar.'
+  },
+  {
+    id: 10, cat: 'treino',
+    tag: 'paper-tag-treino', tagLabel: 'Periodização',
+    title: 'Polarized training has greater impact on key endurance variables than threshold training',
+    authors: 'Seiler, S. et al.',
+    journal: 'International Journal of Sports Physiology and Performance, 9(5), 803–811',
+    year: 2014,
+    doi: 'https://doi.org/10.1123/ijspp.2013-0256',
+    keywords: ['polarizado','z2','fácil','zonas','intensidade','seiler','80/20'],
+    resumo: 'Estudo que validou o modelo de treinamento polarizado (80/20): 80% do volume em intensidade baixa (Z1-Z2) e 20% em alta intensidade (Z4-Z5), com pouco tempo em intensidade moderada (Z3). Atletas que seguiram esse modelo tiveram melhor adaptação aeróbica e menor incidência de overtraining comparado ao treinamento em threshold. Corrobora a importância da corrida fácil ser REALMENTE fácil.',
+    aplicacao: 'Base para a distribuição de zonas de intensidade nos treinos do Stride e para o alerta quando o usuário tende a correr rápido demais nas sessões fáceis.'
+  },
+  {
+    id: 11, cat: 'sono',
+    tag: 'paper-tag-sono', tagLabel: 'Sono & Recuperação',
+    title: 'Sleep and athletic performance: the effects of sleep loss on exercise performance',
+    authors: 'Halson, S.L.',
+    journal: 'Sports Medicine, 44(Suppl 1), S13–S23',
+    year: 2014,
+    doi: 'https://doi.org/10.1007/s40279-014-0259-z',
+    keywords: ['sono','recuperação','performance','halson','fadiga','hrv'],
+    resumo: 'Revisão abrangente sobre sono e performance atlética. Menos de 7h de sono aumenta em 1.7x o risco de lesão em atletas. Sono inadequado reduz síntese proteica, aumenta cortisol (catabolismo), diminui HGH (anabolismo) e compromete a consolidação de padrões motores. A privação crônica de sono tem efeito acumulativo: 6 dias com 6h equivalem a 1 noite sem dormir.',
+    aplicacao: 'Fundamenta o módulo de sono do Stride e o impacto direto da qualidade de sono no score de readiness e na modificação do plano de treino.'
+  },
+  {
+    id: 12, cat: 'lesao',
+    tag: 'paper-tag-lesao', tagLabel: 'Lesões',
+    title: 'Medial tibial stress syndrome: a systematic review',
+    authors: 'Moen, M.H. et al.',
+    journal: 'British Journal of Sports Medicine, 46(3), 179–186',
+    year: 2012,
+    doi: 'https://doi.org/10.1136/bjsports-2011-090443',
+    keywords: ['canelite','periostite','tibial','tíbia','moen'],
+    resumo: 'Revisão sistemática de 21 estudos sobre periostite tibial (canelite), terceira lesão mais comum em corredores iniciantes. A incidência chega a 35% em novos praticantes. Fatores de risco: aumento abrupto de volume, superfícies duras, pronação excessiva e histórico anterior da lesão. O retorno ao treinamento deve ser gradual, iniciando apenas quando a corrida em ritmo fácil for indolor por 2 semanas consecutivas.',
+    aplicacao: 'Fundamenta o alerta de risco elevado de periostite para iniciantes e o protocolo de retorno gradual após lesão no Stride.'
+  },
+  {
+    id: 13, cat: 'prevencao',
+    tag: 'paper-tag-prevencao', tagLabel: 'Prevenção',
+    title: 'Hip abductor weakness in distance runners with iliotibial band syndrome',
+    authors: 'Niemuth, P.E. et al.',
+    journal: 'Clinical Journal of Sport Medicine, 15(1), 14–21',
+    year: 2005,
+    doi: 'https://doi.org/10.1097/00042752-200501000-00004',
+    keywords: ['quadril','abdutores','glúteo','sbit','fraqueza','niemuth','fortalecimento'],
+    resumo: 'Estudo caso-controle com 30 corredores (15 com SBIT, 15 controles). Corredores com SBIT apresentaram 20% menos força de abdução de quadril no lado lesionado. Após protocolo de 6 semanas de fortalecimento de glúteo médio, 90% dos corredores retornaram ao treinamento sem dor. Identifica exercícios específicos mais eficazes: clamshell, abdução lateral com faixa e ponte unilateral.',
+    aplicacao: 'Protocolo específico de fortalecimento de glúteo para usuários com histórico de SBIT no módulo de fortalecimento do Stride.'
+  },
+  {
+    id: 14, cat: 'treino',
+    tag: 'paper-tag-treino', tagLabel: 'Periodização',
+    title: 'Relationship between acute:chronic workload ratios and injury risk in elite rugby league players',
+    authors: 'Hulin, B.T. et al.',
+    journal: 'British Journal of Sports Medicine, 50(4), 231–236',
+    year: 2016,
+    doi: 'https://doi.org/10.1136/bjsports-2015-094817',
+    keywords: ['acwr','carga','rugby','risco','zona segura','hulin'],
+    resumo: 'Estudo longitudinal com 53 atletas de rugby de elite ao longo de 2 temporadas. Validou empiricamente as zonas de risco do ACWR: abaixo de 0.8 (subcarga, risco moderado), 0.8-1.3 (zona segura), 1.3-1.5 (zona de cuidado), acima de 1.5 (zona de alto risco, 2-4x mais lesões). Importante: alta carga crônica (fitness) é protetora — atletas mais treinados toleram melhor picos agudos.',
+    aplicacao: 'Define os limiares exatos de ACWR usados nos alertas coloridos do Stride (verde/amarelo/vermelho) e na análise de risco antes de cada sessão.'
+  },
+  {
+    id: 15, cat: 'sono',
+    tag: 'paper-tag-sono', tagLabel: 'Sono & Recuperação',
+    title: 'Why We Sleep: Unlocking the Power of Sleep and Dreams',
+    authors: 'Walker, M.P.',
+    journal: 'Scribner (livro)',
+    year: 2017,
+    doi: null,
+    keywords: ['sono','walker','recuperação','hrv','memória','motor','atleta'],
+    resumo: 'Obra de referência em neurociência do sono, consolidando décadas de pesquisa. Relevante para atletas: durante o sono REM ocorre a consolidação de padrões motores aprendidos durante o treino (memória procedural). Menos de 6h de sono por 6 noites consecutivas reduz performance física ao equivalente de bafômetro positivo. HRV baixo pela manhã é o melhor preditor biométrico de recuperação insuficiente.',
+    aplicacao: 'Fundamenta a recomendação mínima de 7-9h de sono para atletas e o uso de HRV no módulo de recuperação do Stride.'
+  }
+];
+
+let currentCatFilter = 'todos';
+
+function renderPapers() {
+  const search = (document.getElementById('papers-search')?.value || '').toLowerCase();
+  const filtered = PAPERS.filter(p => {
+    const matchCat = currentCatFilter === 'todos' || p.cat === currentCatFilter;
+    const matchSearch = !search || 
+      p.title.toLowerCase().includes(search) ||
+      p.authors.toLowerCase().includes(search) ||
+      p.resumo.toLowerCase().includes(search) ||
+      p.aplicacao.toLowerCase().includes(search) ||
+      p.keywords.some(k => k.includes(search));
+    return matchCat && matchSearch;
+  });
+
+  document.getElementById('papers-count').textContent = `${filtered.length} paper${filtered.length !== 1 ? 's' : ''} encontrado${filtered.length !== 1 ? 's' : ''}`;
+
+  document.getElementById('papers-list').innerHTML = filtered.map(p => `
+    <div class="paper-card" id="paper-${p.id}" onclick="togglePaper(${p.id})">
+      <div class="paper-header">
+        <span class="paper-tag ${p.tag}">${p.tagLabel}</span>
+        <div class="paper-meta">
+          <div class="paper-title">${p.title}</div>
+          <div class="paper-authors">${p.authors} · ${p.year}</div>
+          <div class="paper-journal">${p.journal}</div>
+        </div>
+        <span class="paper-expand">▼</span>
+      </div>
+      <div class="paper-body">
+        <div class="paper-resumo">${p.resumo}</div>
+        <div class="paper-aplicacao"><strong>Como o Stride usa este paper:</strong> ${p.aplicacao}</div>
+        ${p.doi ? `<div class="paper-doi">DOI: <a href="${p.doi}" target="_blank" onclick="event.stopPropagation()">${p.doi}</a></div>` : '<div class="paper-doi" style="color:var(--text3)">Livro — sem DOI</div>'}
+      </div>
+    </div>
+  `).join('') || '<div class="empty"><div class="empty-icon">🔬</div><div class="empty-title">Nenhum paper encontrado</div><div class="empty-text">Tente outros termos de busca.</div></div>';
+}
+
+function togglePaper(id) {
+  const card = document.getElementById('paper-' + id);
+  card.classList.toggle('expanded');
+}
+
+function filtrarPapers() { renderPapers(); }
+
+function setCatFilter(cat, btn) {
+  currentCatFilter = cat;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderPapers();
+}
+
+// ============================================================
+// LANGUAGE SYSTEM
+// ============================================================
+const LANG_NAMES = { pt: 'Portuguese', en: 'English', es: 'Spanish', fr: 'French', de: 'German', it: 'Italian' };
+const LANG_LABELS = { pt: 'Português', en: 'English', es: 'Español', fr: 'Français', de: 'Deutsch', it: 'Italiano' };
+
+let currentLang = localStorage.getItem('stride_lang') || 'pt';
+
+function setLang(lang, btn) {
+  currentLang = lang;
+  localStorage.setItem('stride_lang', lang);
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
+  // Sync resumo-lang select if on that page
+  const sel = document.getElementById('resumo-lang');
+  if (sel) sel.value = lang;
+  // Apply UI language
+  applyLang(lang);
+}
+
+function applyLang(lang) {
+  const t = TRANSLATIONS[lang] || TRANSLATIONS['pt'];
+  // Translate data-t elements (nav labels etc)
+  document.querySelectorAll('[data-t]').forEach(el => {
+    const key = el.getAttribute('data-t');
+    if (t[key]) el.textContent = t[key];
+  });
+  // Translate elements with explicit IDs
+  ['dash-sub','stat-label-km','stat-label-done','stat-label-acwr'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el && t[id]) el.textContent = t[id];
+  });
+}
+
+// Core UI translations
+const TRANSLATIONS = {
+  pt: {
+    'nav-dashboard': 'Dashboard', 'nav-plano': 'Plano semanal',
+    'nav-gerar': 'Gerar treino', 'nav-sono': 'Sono & recover.',
+    'nav-lesao': 'Risco de lesão', 'nav-forca': 'Fortalecimento',
+    'nav-perfil': 'Meu perfil', 'nav-integracoes': 'Integrações',
+    'nav-evidencias': 'Base científica',
+    'dash-sub': 'Aqui está seu resumo de hoje.',
+    'stat-label-km': 'Km esta semana', 'stat-label-done': 'Treinos completos',
+    'stat-label-acwr': 'Score ACWR',
+  },
+  en: {
+    'nav-dashboard': 'Dashboard', 'nav-plano': 'Weekly plan',
+    'nav-gerar': 'Generate workout', 'nav-sono': 'Sleep & recovery',
+    'nav-lesao': 'Injury risk', 'nav-forca': 'Strength training',
+    'nav-perfil': 'My profile', 'nav-integracoes': 'Integrations',
+    'nav-evidencias': 'Scientific base',
+    'dash-sub': 'Here is your summary for today.',
+    'stat-label-km': 'Km this week', 'stat-label-done': 'Workouts done',
+    'stat-label-acwr': 'ACWR Score',
+  },
+  es: {
+    'nav-dashboard': 'Dashboard', 'nav-plano': 'Plan semanal',
+    'nav-gerar': 'Generar entrenamiento', 'nav-sono': 'Sueño & recuperación',
+    'nav-lesao': 'Riesgo de lesión', 'nav-forca': 'Fortalecimiento',
+    'nav-perfil': 'Mi perfil', 'nav-integracoes': 'Integraciones',
+    'nav-evidencias': 'Base científica',
+    'dash-sub': 'Aquí está tu resumen de hoy.',
+    'stat-label-km': 'Km esta semana', 'stat-label-done': 'Entrenamientos',
+    'stat-label-acwr': 'Score ACWR',
+  },
+  fr: {
+    'nav-dashboard': 'Tableau de bord', 'nav-plano': 'Plan hebdomadaire',
+    'nav-gerar': 'Générer séance', 'nav-sono': 'Sommeil & récup.',
+    'nav-lesao': 'Risque blessure', 'nav-forca': 'Renforcement',
+    'nav-perfil': 'Mon profil', 'nav-integracoes': 'Intégrations',
+    'nav-evidencias': 'Base scientifique',
+    'dash-sub': 'Voici votre résumé du jour.',
+    'stat-label-km': 'Km cette semaine', 'stat-label-done': 'Séances faites',
+    'stat-label-acwr': 'Score ACWR',
+  },
+  de: {
+    'nav-dashboard': 'Dashboard', 'nav-plano': 'Wochenplan',
+    'nav-gerar': 'Training erstellen', 'nav-sono': 'Schlaf & Erholung',
+    'nav-lesao': 'Verletzungsrisiko', 'nav-forca': 'Krafttraining',
+    'nav-perfil': 'Mein Profil', 'nav-integracoes': 'Integrationen',
+    'nav-evidencias': 'Wissenschaftliche Basis',
+    'dash-sub': 'Hier ist Ihre heutige Zusammenfassung.',
+    'stat-label-km': 'Km diese Woche', 'stat-label-done': 'Trainings erledigt',
+    'stat-label-acwr': 'ACWR Score',
+  },
+  it: {
+    'nav-dashboard': 'Dashboard', 'nav-plano': 'Piano settimanale',
+    'nav-gerar': 'Genera allenamento', 'nav-sono': 'Sonno & recupero',
+    'nav-lesao': 'Rischio infortuni', 'nav-forca': 'Potenziamento',
+    'nav-perfil': 'Il mio profilo', 'nav-integracoes': 'Integrazioni',
+    'nav-evidencias': 'Base scientifica',
+    'dash-sub': 'Ecco il tuo riepilogo di oggi.',
+    'stat-label-km': 'Km questa settimana', 'stat-label-done': 'Allenamenti fatti',
+    'stat-label-acwr': 'Score ACWR',
+  }
+};
+
+function initLangIds() {
+  // Add IDs for translatable page elements
+  const sub = document.querySelector('#page-dashboard .page-sub');
+  if (sub) sub.id = 'dash-sub';
+  document.querySelectorAll('.stat-label').forEach((el, i) => {
+    const keys = ['stat-label-km','stat-label-done','stat-label-acwr'];
+    if (keys[i]) el.setAttribute('data-t', keys[i]);
+  });
+  applyLang(currentLang);
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === currentLang));
+  const sel = document.getElementById('resumo-lang');
+  if (sel) sel.value = currentLang;
+}
+
+async function gerarResumoGeral() {
+  document.getElementById('resumo-geral-result').style.display = 'none';
+  document.getElementById('resumo-geral-thinking').style.display = 'flex';
+
+  const lang = document.getElementById('resumo-lang')?.value || currentLang;
+  const langName = LANG_NAMES[lang] || 'Portuguese';
+
+  const prompt = `You are a sports science expert. Synthesize how these scientific papers integrate to form the Stride training protocol, a running platform. Write your response in ${langName}.
+
+Papers used:
+1. Gabbett 2016 — ACWR and training load
+2. Van Gent 2007 — running injury epidemiology
+3. Fredericson & Wolf 2005 — iliotibial band syndrome
+4. Bompa & Haff 2009 — periodization
+5. Buist 2010 — beginners and load progression
+6. Meeuwisse 2007 — connective tissue adaptation
+7. Riddle & Schappert 2004 — plantar fasciitis
+8. Telles 2016 — yoga and proprioception
+9. Lian 2005 — patellar tendinopathy
+10. Seiler 2014 — polarized training
+11. Halson 2014 — sleep and performance
+12. Moen 2012 — medial tibial stress syndrome
+13. Niemuth 2005 — hip abductor weakness and ITBS
+14. Hulin 2016 — ACWR zones and risk
+15. Walker 2017 — sleep neuroscience
+
+Write 4-5 paragraphs in ${langName} explaining:
+1. How load science (ACWR) and periodization connect
+2. How the most common injury profiles inform prevention protocol
+3. The role of sleep and recovery
+4. How complementary sports like yoga impact injury risk
+5. What makes this evidence-based approach different from conventional running apps
+
+Write for an intelligent but not necessarily scientific audience. Maximum 350 words.`;
+
+  try {
+    const resp = await callClaude(prompt);
+    document.getElementById('resumo-geral-text').textContent = resp;
+    document.getElementById('resumo-geral-result').style.display = 'block';
+  } catch(e) {
+    document.getElementById('resumo-geral-text').textContent = 'Erro: ' + e.message;
+    document.getElementById('resumo-geral-result').style.display = 'block';
+  }
+  document.getElementById('resumo-geral-thinking').style.display = 'none';
+}
+
+// Initialize papers on page load when navigating to evidencias
+const _origNavigate = navigate;
+window.navigate = function(page) {
+  _origNavigate(page);
+  if (page === 'evidencias') renderPapers();
+};
+
+
+
+// ============================================================
+// MULTI-PROFILE PERSISTENCE SYSTEM
+// ============================================================
+
+const DB = {
+  // Get all profiles index
+  getProfiles() {
+    try { return JSON.parse(localStorage.getItem('stride_profiles') || '[]'); } catch(e) { return []; }
+  },
+  // Save profiles index
+  saveProfiles(profiles) {
+    localStorage.setItem('stride_profiles', JSON.stringify(profiles));
+  },
+  // Get current profile id
+  getCurrentId() {
+    return localStorage.getItem('stride_current_profile');
+  },
+  // Set current profile id
+  setCurrentId(id) {
+    localStorage.setItem('stride_current_profile', id);
+  },
+  // Get profile data
+  getProfileData(id) {
+    try { return JSON.parse(localStorage.getItem('stride_profile_' + id) || 'null'); } catch(e) { return null; }
+  },
+  // Save profile data
+  saveProfileData(id, data) {
+    localStorage.setItem('stride_profile_' + id, JSON.stringify(data));
+  },
+  // Delete profile
+  deleteProfile(id) {
+    const profiles = this.getProfiles().filter(p => p.id !== id);
+    this.saveProfiles(profiles);
+    localStorage.removeItem('stride_profile_' + id);
+    if (this.getCurrentId() === id) localStorage.removeItem('stride_current_profile');
+  },
+  // Generate unique id
+  newId() { return 'p_' + Date.now() + '_' + Math.random().toString(36).slice(2,7); }
+};
+
+// Save current state to active profile
+function saveCurrentProfile() {
+  const id = DB.getCurrentId();
+  if (!id || !state.perfil) return;
+  const data = {
+    perfil: state.perfil,
+    plano: state.plano,
+    semana: state.semana,
+    sonoHistory: state.sonoHistory,
+    readiness: state.readiness,
+    stravaToken: STRAVA.token,
+    stravaAthlete: STRAVA.athlete,
+    updatedAt: new Date().toISOString()
+  };
+  DB.saveProfileData(id, data);
+  // Update profile index with latest name
+  const profiles = DB.getProfiles();
+  const idx = profiles.findIndex(p => p.id === id);
+  if (idx >= 0) {
+    profiles[idx].nome = state.perfil.nome;
+    profiles[idx].objetivo = state.perfil.objetivo;
+    profiles[idx].updatedAt = data.updatedAt;
+    DB.saveProfiles(profiles);
+  }
+}
+
+// Load a profile into state
+function loadProfile(id) {
+  const data = DB.getProfileData(id);
+  if (!data) return false;
+  state.perfil = data.perfil || null;
+  state.plano = data.plano || null;
+  state.semana = data.semana || [];
+  state.sonoHistory = data.sonoHistory || [];
+  state.readiness = data.readiness || null;
+  if (data.stravaToken) {
+    STRAVA.token = data.stravaToken;
+    STRAVA.athlete = data.stravaAthlete || null;
+  }
+  DB.setCurrentId(id);
+  return true;
+}
+
+// Render profiles selection screen
+function renderProfilesScreen() {
+  const profiles = DB.getProfiles();
+  const avatars = ['🏃','🧑‍🦰','👩‍🦱','🧔','👩','🏋️','🚴','🧘'];
+  const grid = document.getElementById('profiles-grid');
+
+  if (profiles.length === 0) {
+    // No profiles at all — go straight to create
+    createNewProfile();
+    return;
+  }
+
+  grid.innerHTML = profiles.map((p, i) => `
+    <div class="profile-tile" onclick="selectProfile('${p.id}')">
+      <button class="profile-tile-del" onclick="event.stopPropagation();deleteProfileConfirm('${p.id}')" title="Excluir perfil">✕</button>
+      <div class="profile-avatar">${avatars[i % avatars.length]}</div>
+      <div class="profile-tile-name">${p.nome || 'Sem nome'}</div>
+      <div class="profile-tile-meta">${({saude:'Saúde',5:'5K','5k':'5K','10k':'10K',meia:'Meia',maratona:'Maratona',performance:'Performance'})[p.objetivo] || 'Corredor'}</div>
+    </div>
+  `).join('') + `
+    <div class="profile-tile add-new" onclick="createNewProfile()">
+      <div class="profile-avatar" style="background:var(--surface2);border-color:var(--border2)">+</div>
+      <div class="profile-tile-name" style="color:var(--text2)">Novo perfil</div>
+      <div class="profile-tile-meta">Adicionar atleta</div>
+    </div>
+  `;
+}
+
+function selectProfile(id) {
+  const loaded = loadProfile(id);
+  document.getElementById('profiles-screen').style.display = 'none';
+  document.getElementById('main-app').style.display = 'flex';
+  if (loaded && state.perfil) {
+    updateSidebarProfile();
+    calcularReadiness();
+    atualizarDashboard();
+    renderSleepHistory();
+    navigate('dashboard');
+    // Restore Strava if token exists
+    if (STRAVA.token) loadStravaData();
+  } else {
+    navigate('onboarding');
+  }
+}
+
+function createNewProfile() {
+  // Clear state for fresh onboarding
+  state.perfil = null; state.plano = null; state.semana = [];
+  state.sonoHistory = []; state.readiness = null;
+  STRAVA.token = null; STRAVA.athlete = null; STRAVA.activities = [];
+  // Create placeholder profile entry
+  const id = DB.newId();
+  const profiles = DB.getProfiles();
+  profiles.push({ id, nome: 'Novo atleta', objetivo: '', updatedAt: new Date().toISOString() });
+  DB.saveProfiles(profiles);
+  DB.setCurrentId(id);
+  document.getElementById('profiles-screen').style.display = 'none';
+  document.getElementById('main-app').style.display = 'flex';
+  navigate('onboarding');
+}
+
+function deleteProfileConfirm(id) {
+  const profiles = DB.getProfiles();
+  const p = profiles.find(x => x.id === id);
+  if (confirm(`Excluir o perfil "${p?.nome || 'este atleta'}"? Esta ação não pode ser desfeita.`)) {
+    DB.deleteProfile(id);
+    renderProfilesScreen();
+    if (DB.getProfiles().length === 0) return; // stays on screen
+  }
+}
+
+function showProfilesScreen() {
+  saveCurrentProfile();
+  renderProfilesScreen();
+  document.getElementById('profiles-screen').style.display = 'flex';
+  document.getElementById('main-app').style.display = 'none';
+}
+
+function updateSidebarProfile() {
+  if (!state.perfil) return;
+  const avatars = ['🏃','🧑‍🦰','👩‍🦱','🧔','👩','🏋️','🚴','🧘'];
+  const profiles = DB.getProfiles();
+  const idx = profiles.findIndex(p => p.id === DB.getCurrentId());
+  document.getElementById('sidebar-avatar').textContent = avatars[idx % avatars.length] || '🏃';
+  document.getElementById('sidebar-profile-name').textContent = state.perfil.nome || 'Perfil';
+}
+
+// Auto-save every 30 seconds and on key actions
+setInterval(saveCurrentProfile, 30000);
+
+// Patch generateInitialPlan to save after creating plan
+const _origGenerate = window.generateInitialPlan;
+
+// ============================================================
+// INIT
+// ============================================================
+renderSleepHistory();
+setTimeout(initLangIds, 100);
+
+// Migrate old single-profile localStorage to new multi-profile format
+function migrateOldData() {
+  const oldPerfil = localStorage.getItem('stride_perfil');
+  const oldPlano = localStorage.getItem('stride_plano');
+  if (!oldPerfil) return false;
+  try {
+    const perfil = JSON.parse(oldPerfil);
+    const plano = oldPlano ? JSON.parse(oldPlano) : null;
+    const id = DB.newId();
+    const profiles = DB.getProfiles();
+    if (profiles.length > 0) return false; // already migrated
+    profiles.push({ id, nome: perfil.nome || 'Atleta', objetivo: perfil.objetivo || '', updatedAt: new Date().toISOString() });
+    DB.saveProfiles(profiles);
+    DB.saveProfileData(id, { perfil, plano, semana: plano?.semana || [], sonoHistory: [], updatedAt: new Date().toISOString() });
+    // Clean up old keys
+    localStorage.removeItem('stride_perfil');
+    localStorage.removeItem('stride_plano');
+    return true;
+  } catch(e) { return false; }
+}
+
+migrateOldData();
+
+// Check for Strava OAuth callback
+const _initParams = new URLSearchParams(window.location.search);
+if (_initParams.get('code') || _initParams.get('error')) {
+  const _cbId = DB.getCurrentId();
+  if (_cbId) loadProfile(_cbId);
+  document.getElementById('profiles-screen').style.display = 'none';
+  document.getElementById('main-app').style.display = 'flex';
+  if (state.perfil) { updateSidebarProfile(); atualizarDashboard(); }
+  handleStravaCallback();
+} else {
+  const profiles = DB.getProfiles();
+  if (profiles.length === 1) {
+    // Only one profile — auto-select
+    selectProfile(profiles[0].id);
+  } else {
+    // Zero or multiple — renderProfilesScreen handles both cases
+    renderProfilesScreen();
+  }
+}
+
+
+
+</script>
+</body>
+</html>
+<!-- build 1777380723999330475 -->
+<!-- fix 1777380939 -->
+<!-- v1777381307 -->
+<!-- v1777381548 -->
+<!-- v1777381771 -->
+<!-- v1777382520 -->
+<!-- vercel-v1777383193 -->
