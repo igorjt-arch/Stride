@@ -4103,17 +4103,18 @@ function initFirebase() {
     const userInfoEl = document.getElementById('sidebar-user-info');
     if (userInfoEl) userInfoEl.textContent = user.email;
 
-    // Try to load Firestore data — retry up to 3 times
+    // Hardcoded admin UIDs as fallback when Firestore is slow
+    const ADMIN_UIDS = ['UFHA7vU7hOZQ2UQRqY0HV2qFT4J3'];
+    const isHardcodedAdmin = ADMIN_UIDS.includes(user.uid);
+
+    // Try to load Firestore data — single attempt with longer timeout
     let userData = null;
-    for (let attempt = 1; attempt <= 3; attempt++) {
-      try {
-        const timeoutPromise = new Promise(resolve => setTimeout(() => resolve(null), 6000));
-        userData = await Promise.race([loadUserData(user.uid), timeoutPromise]);
-        if (userData) break;
-        console.log(`Firestore attempt ${attempt} timed out, retrying...`);
-      } catch(e) {
-        console.warn('Firestore load error:', e.message);
-      }
+    try {
+      const timeoutPromise = new Promise(resolve => setTimeout(() => resolve(null), 8000));
+      userData = await Promise.race([loadUserData(user.uid), timeoutPromise]);
+      if (!userData) console.log('Firestore timed out, using fallback');
+    } catch(e) {
+      console.warn('Firestore load error:', e.message);
     }
 
     // If no doc exists, create one
@@ -4128,7 +4129,7 @@ function initFirebase() {
       saveUserDataToFirestore(user.uid, userData).catch(e => console.warn('Save error:', e));
     }
 
-    isAdmin = userData?.role === 'admin';
+    isAdmin = isHardcodedAdmin || userData?.role === 'admin';
 
     // Navigate immediately — don't wait for Firestore
     hideLoginScreen();
