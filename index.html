@@ -4181,13 +4181,32 @@ function initFirebase() {
     // Navigate immediately — don't wait for Firestore
     hideLoginScreen();
 
+    // Check for Strava callback FIRST before any navigation
+    const _params = new URLSearchParams(window.location.search);
+    const hasStravaCallback = _params.get('code') || _params.get('error');
+    const fromAdminProfile = sessionStorage.getItem('stride_strava_from_admin');
+
+    if (hasStravaCallback && fromAdminProfile && isAdmin) {
+      // Admin returning from Strava — open athlete profile and handle callback
+      sessionStorage.removeItem('stride_strava_from_admin');
+      if (userData?.perfil) {
+        state.perfil = userData.perfil;
+        state.plano = userData.plano || null;
+        state.semana = userData.semana || [];
+        state.sonoHistory = userData.sonoHistory || [];
+      }
+      await adminOpenMyProfile();
+      handleStravaCallback();
+      return;
+    }
+
     if (isAdmin) {
       await showAdminPanel(user);
       return;
     }
 
     // Load athlete profile
-    if (userData.perfil) {
+    if (userData?.perfil) {
       state.perfil = userData.perfil;
       state.plano = userData.plano || null;
       state.semana = userData.semana || [];
@@ -4199,19 +4218,11 @@ function initFirebase() {
 
     document.getElementById('profiles-screen').style.display = 'none';
     document.getElementById('main-app').style.display = 'flex';
-    navigate(userData.perfil ? 'dashboard' : 'onboarding');
+    navigate(userData?.perfil ? 'dashboard' : 'onboarding');
 
-    // Handle Strava callback
-    const _params = new URLSearchParams(window.location.search);
-    if (_params.get('code') || _params.get('error')) {
-      const fromAdmin = sessionStorage.getItem('stride_strava_from_admin');
-      if (fromAdmin && isAdmin) {
-        sessionStorage.removeItem('stride_strava_from_admin');
-        await adminOpenMyProfile();
-        handleStravaCallback();
-      } else {
-        handleStravaCallback();
-      }
+    // Handle Strava callback for regular athletes
+    if (hasStravaCallback) {
+      handleStravaCallback();
     }
   });
 }
