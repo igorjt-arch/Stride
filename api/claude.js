@@ -29,7 +29,7 @@ module.exports = async function(req, res) {
   if (!prompt) { res.status(400).json({ error: 'No prompt' }); return; }
 
   const payload = JSON.stringify({
-    model: 'claude-sonnet-4-20250514',
+    model: 'claude-sonnet-4-5-20250929',
     max_tokens: 1500,
     system: 'You are an expert in sports science and running training. Be direct and practical.',
     messages: [{ role: 'user', content: prompt.slice(0, 8000) }]
