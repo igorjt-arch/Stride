@@ -2646,13 +2646,8 @@ function renderStravaConnected() {
   `;
 
   // Activity type icons
-  const typeIcon = t => ({
-    'Run':'🏃','VirtualRun':'🏃','TrailRun':'🏔️',
-    'Ride':'🚴','VirtualRide':'🚴','EBikeRide':'🚴',
-    'Swim':'🏊','WeightTraining':'🏋️','Workout':'💪',
-    'Yoga':'🧘','Pilates':'🤸','Walk':'🚶','Hike':'🥾',
-    'Soccer':'⚽','Tennis':'🎾','Crossfit':'🔥','Rowing':'🚣'
-  }[t] || '⬡';
+  const typeIcons = {'Run':'🏃','VirtualRun':'🏃','TrailRun':'🏔️','Ride':'🚴','VirtualRide':'🚴','EBikeRide':'🚴','Swim':'🏊','WeightTraining':'🏋️','Workout':'💪','Yoga':'🧘','Pilates':'🤸','Walk':'🚶','Hike':'🥾','Soccer':'⚽','Tennis':'🎾','Crossfit':'🔥','Rowing':'🚣'};
+  const typeIcon = t => typeIcons[t] || '⬡';
 
   // Data transparency banner
   const transpHtml = acts.length > 0 ? `
