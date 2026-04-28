@@ -3834,8 +3834,10 @@ async function doLogin() {
 async function doGoogleLogin() {
   try {
     const { signInWithRedirect } = window._fbFns;
+    sessionStorage.setItem('stride_google_redirect', '1');
     await signInWithRedirect(window._fbAuth, window._fbGoogleProvider);
   } catch(e) {
+    sessionStorage.removeItem('stride_google_redirect');
     showLoginError('Erro ao entrar com Google: ' + e.message);
   }
 }
@@ -4058,12 +4060,31 @@ function initFirebase() {
 
   // Handle Google redirect result first
   getRedirectResult(window._fbAuth).then(result => {
-    if (result?.user) console.log('Redirect login success:', result.user.email);
+    if (result?.user) {
+      console.log('Redirect login success:', result.user.email);
+      // onAuthStateChanged will handle the rest
+    }
   }).catch(e => {
-    if (e.code !== 'auth/no-current-user') console.warn('Redirect error:', e.message);
+    if (e.code && e.code !== 'auth/no-current-user') {
+      console.warn('Redirect error:', e.code, e.message);
+      showLoginScreen();
+      showLoginError('Erro no login: ' + e.message);
+    }
   });
 
   onAuthStateChanged(window._fbAuth, async (user) => {
+    // Show loading while checking auth
+    if (!user) {
+      // Only show login if we're not in the middle of a redirect
+      const isRedirecting = sessionStorage.getItem('stride_google_redirect');
+      if (!isRedirecting) {
+        showLoginScreen();
+      }
+      return;
+    }
+
+    // Clear redirect flag
+    sessionStorage.removeItem('stride_google_redirect');
     if (!user) {
       showLoginScreen();
       return;
