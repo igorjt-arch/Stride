@@ -4043,21 +4043,46 @@ async function doCreateAthlete() {
     document.getElementById('create-athlete-error').style.display = 'block';
     return;
   }
+  if (password.length < 6) {
+    document.getElementById('create-athlete-error').textContent = 'Senha deve ter no mínimo 6 caracteres.';
+    document.getElementById('create-athlete-error').style.display = 'block';
+    return;
+  }
 
-  // Use Vercel function to create user (Firebase Admin SDK)
   try {
-    const res = await fetch('/api/create-user', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, email, password, adminUid: currentUser.uid })
+    const { createUserWithEmailAndPassword, doc, setDoc } = window._fbFns;
+
+    // Create user with Firebase Auth (client-side)
+    const cred = await createUserWithEmailAndPassword(window._fbAuth, email, password);
+    const uid = cred.user.uid;
+
+    // Save to Firestore
+    await setDoc(doc(window._fbDb, 'users', uid), {
+      email, name, role: 'athlete',
+      createdAt: new Date().toISOString()
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Erro ao criar usuário');
+
+    // Sign back in as admin (creating user signs in as the new user)
     closeCreateAthleteModal();
     await loadAdminAthletes();
-    alert(`Atleta "${name}" criado com sucesso!`);
+    alert(`Atleta "${name}" criado com sucesso!\nEmail: ${email}\nSenha: ${password}`);
+
+    // Re-authenticate as admin
+    const { signInWithEmailAndPassword } = window._fbFns;
+    const adminEmail = document.getElementById('sidebar-user-info')?.textContent;
+    if (adminEmail) {
+      const adminPassword = prompt('Para continuar como admin, confirme sua senha:');
+      if (adminPassword) {
+        await signInWithEmailAndPassword(window._fbAuth, adminEmail, adminPassword);
+      }
+    }
   } catch(e) {
-    document.getElementById('create-athlete-error').textContent = e.message;
+    const msgs = {
+      'auth/email-already-in-use': 'Este email já está cadastrado.',
+      'auth/invalid-email': 'Email inválido.',
+      'auth/weak-password': 'Senha muito fraca.'
+    };
+    document.getElementById('create-athlete-error').textContent = msgs[e.code] || e.message;
     document.getElementById('create-athlete-error').style.display = 'block';
   }
 }
