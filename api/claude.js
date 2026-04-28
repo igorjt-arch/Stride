@@ -1,3 +1,10 @@
+// Temporary diagnostic
+if (req.method === 'GET') {
+  const keyExists = !!process.env.ANTHROPIC_API_KEY;
+  const keyPrefix = process.env.ANTHROPIC_API_KEY ? process.env.ANTHROPIC_API_KEY.slice(0, 15) : 'NOT SET';
+  res.status(200).json({ keyExists, keyPrefix });
+  return;
+}
 const https = require('https');
 
 module.exports = async function(req, res) {
