@@ -8,7 +8,7 @@
 <!-- Firebase SDK -->
 <script type="module">
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-  import { getAuth, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, GoogleAuthProvider, signOut, onAuthStateChanged, sendPasswordResetEmail } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+  import { getAuth, signInWithPopup, signInWithRedirect, getRedirectResult, signInWithEmailAndPassword, createUserWithEmailAndPassword, GoogleAuthProvider, signOut, onAuthStateChanged, sendPasswordResetEmail } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
   import { getFirestore, doc, setDoc, getDoc, getDocs, collection, query, where, updateDoc, deleteDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
   const firebaseConfig = {
@@ -24,7 +24,7 @@
   window._fbAuth = getAuth(app);
   window._fbDb = getFirestore(app);
   window._fbGoogleProvider = new GoogleAuthProvider();
-  window._fbFns = { signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail, doc, setDoc, getDoc, getDocs, collection, query, where, updateDoc, deleteDoc, serverTimestamp };
+  window._fbFns = { signInWithPopup, signInWithRedirect, getRedirectResult, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail, doc, setDoc, getDoc, getDocs, collection, query, where, updateDoc, deleteDoc, serverTimestamp };
   window._fbReady = true;
   document.dispatchEvent(new Event('firebase-ready'));
 </script>
@@ -3833,10 +3833,10 @@ async function doLogin() {
 
 async function doGoogleLogin() {
   try {
-    const { signInWithPopup } = window._fbFns;
-    await signInWithPopup(window._fbAuth, window._fbGoogleProvider);
+    const { signInWithRedirect } = window._fbFns;
+    await signInWithRedirect(window._fbAuth, window._fbGoogleProvider);
   } catch(e) {
-    if (e.code !== 'auth/popup-closed-by-user') showLoginError('Erro ao entrar com Google: ' + e.message);
+    showLoginError('Erro ao entrar com Google: ' + e.message);
   }
 }
 
@@ -4054,7 +4054,15 @@ async function doCreateAthlete() {
 
 // ── FIREBASE AUTH STATE LISTENER ─────────────────────────────
 function initFirebase() {
-  const { onAuthStateChanged, doc, getDoc, setDoc } = window._fbFns;
+  const { onAuthStateChanged, getRedirectResult, doc, getDoc, setDoc } = window._fbFns;
+
+  // Handle Google redirect result first
+  getRedirectResult(window._fbAuth).then(result => {
+    if (result?.user) console.log('Redirect login success:', result.user.email);
+  }).catch(e => {
+    if (e.code !== 'auth/no-current-user') console.warn('Redirect error:', e.message);
+  });
+
   onAuthStateChanged(window._fbAuth, async (user) => {
     if (!user) {
       showLoginScreen();
