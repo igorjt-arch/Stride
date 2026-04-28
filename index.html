@@ -1941,12 +1941,9 @@ async function generateInitialPlan() {
   const esportesCustom = customEsportes.map(e => e.nome);
 
   state.perfil = { nome, nivel, objetivo, dias: parseInt(dias), pisada, base, sono: parseFloat(sono), sonoQual, stress, lesoes, wearables, tempoPratica, esportes, esportesPrevcao, esportesCarga, esportesCustom };
-  // Update profile index name
-  const _profiles = DB.getProfiles();
-  const _curId = DB.getCurrentId();
-  const _pidx = _profiles.findIndex(p => p.id === _curId);
-  if (_pidx >= 0) { _profiles[_pidx].nome = nome; _profiles[_pidx].objetivo = objetivo; DB.saveProfiles(_profiles); }
   updateSidebarProfile();
+  // Save perfil to Firestore immediately
+  saveCurrentProfile();
 
   document.getElementById('btn-generate').disabled = true;
   document.getElementById('gen-thinking').style.display = 'flex';
@@ -2627,6 +2624,8 @@ function connectStrava() {
 
   const redirectUri = window.location.href.split('?')[0].split('#')[0];
   const url = `${STRAVA_AUTH_URL}?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&approval_prompt=auto&scope=${STRAVA_SCOPE}`;
+  // Save state so we know to return to admin-athlete mode after redirect
+  if (isAdmin) sessionStorage.setItem('stride_strava_from_admin', '1');
   window.location.href = url;
 }
 
@@ -3633,29 +3632,19 @@ const DB = {
 };
 
 // Save current state to active profile
+// Single saveCurrentProfile — saves to Firestore
 function saveCurrentProfile() {
-  const id = DB.getCurrentId();
-  if (!id || !state.perfil) return;
+  if (!currentUser || !state.perfil) return;
   const data = {
     perfil: state.perfil,
     plano: state.plano,
     semana: state.semana,
     sonoHistory: state.sonoHistory,
-    readiness: state.readiness,
-    stravaToken: STRAVA.token,
-    stravaAthlete: STRAVA.athlete,
+    stravaToken: STRAVA.token || null,
+    stravaAthlete: STRAVA.athlete || null,
     updatedAt: new Date().toISOString()
   };
-  DB.saveProfileData(id, data);
-  // Update profile index with latest name
-  const profiles = DB.getProfiles();
-  const idx = profiles.findIndex(p => p.id === id);
-  if (idx >= 0) {
-    profiles[idx].nome = state.perfil.nome;
-    profiles[idx].objetivo = state.perfil.objetivo;
-    profiles[idx].updatedAt = data.updatedAt;
-    DB.saveProfiles(profiles);
-  }
+  saveUserDataToFirestore(currentUser.uid, data).catch(e => console.warn('Save error:', e));
 }
 
 // Load a profile into state
@@ -3903,16 +3892,7 @@ async function saveUserDataToFirestore(uid, data) {
   await setDoc(doc(window._fbDb, 'users', uid), data, { merge: true });
 }
 
-// Override saveCurrentProfile to use Firestore
-const _origSaveProfile = saveCurrentProfile;
-function saveCurrentProfile() {
-  if (!currentUser || !state.perfil) return;
-  const data = {
-    perfil: state.perfil, plano: state.plano, semana: state.semana,
-    sonoHistory: state.sonoHistory, updatedAt: new Date().toISOString()
-  };
-  saveUserDataToFirestore(currentUser.uid, data).catch(e => console.warn('Save error:', e));
-}
+
 
 // ── ADMIN PANEL ──────────────────────────────────────────────
 async function showAdminPanel(user) {
@@ -4129,16 +4109,7 @@ async function adminOpenMyProfile() {
   navigate(state.perfil ? 'dashboard' : 'onboarding');
 }
 
-// Override saveCurrentProfile to save admin's own profile correctly
-const _baseSaveProfile = saveCurrentProfile;
-function saveCurrentProfile() {
-  if (!currentUser || !state.perfil) return;
-  const data = {
-    perfil: state.perfil, plano: state.plano, semana: state.semana,
-    sonoHistory: state.sonoHistory, updatedAt: new Date().toISOString()
-  };
-  saveUserDataToFirestore(currentUser.uid, data).catch(e => console.warn('Save error:', e));
-}
+
 function initFirebase() {
   const { onAuthStateChanged, getRedirectResult, doc, getDoc, setDoc } = window._fbFns;
 
@@ -4233,7 +4204,14 @@ function initFirebase() {
     // Handle Strava callback
     const _params = new URLSearchParams(window.location.search);
     if (_params.get('code') || _params.get('error')) {
-      handleStravaCallback();
+      const fromAdmin = sessionStorage.getItem('stride_strava_from_admin');
+      if (fromAdmin && isAdmin) {
+        sessionStorage.removeItem('stride_strava_from_admin');
+        await adminOpenMyProfile();
+        handleStravaCallback();
+      } else {
+        handleStravaCallback();
+      }
     }
   });
 }
