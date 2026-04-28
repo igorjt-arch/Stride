@@ -2563,8 +2563,10 @@ async function loadStravaData() {
     } catch(e) {
       allActs = [];
     }
-    // Filter runs only
-    STRAVA.activities = Array.isArray(allActs) ? allActs.filter(a => a.type === 'Run' || a.sport_type === 'Run') : [];
+    // Keep all activities — runs AND complementary sports (bike, gym, swim, etc.)
+    // All contribute to total load (ACWR calculation)
+    STRAVA.activities = Array.isArray(allActs) ? allActs : [];
+    STRAVA.runs = STRAVA.activities.filter(a => a.type === 'Run' || a.sport_type === 'Run');
     renderStravaConnected();
   } catch(e) {
     hideStravaLoading();
@@ -2576,38 +2578,43 @@ async function loadStravaData() {
 
 function renderStravaConnected() {
   const acts = STRAVA.activities;
+  const runs = acts.filter(a => a.type === 'Run' || a.sport_type === 'Run');
   const athlete = STRAVA.athlete;
 
   // Hide loading indicator immediately
   const ld = document.getElementById('strava-loading');
   if (ld) ld.style.display = 'none';
 
-  // Summary stats
   const now = Date.now();
-  const last7 = acts.filter(a => (now - new Date(a.start_date).getTime()) < 7*24*60*60*1000);
-  const last28 = acts.filter(a => (now - new Date(a.start_date).getTime()) < 28*24*60*60*1000);
-  const kmLast7 = last7.reduce((s,a) => s + a.distance/1000, 0);
-  const kmLast28 = last28.reduce((s,a) => s + a.distance/1000, 0);
+  const runsLast7 = runs.filter(a => (now - new Date(a.start_date).getTime()) < 7*24*60*60*1000);
+  const runsLast28 = runs.filter(a => (now - new Date(a.start_date).getTime()) < 28*24*60*60*1000);
+  const kmLast7 = runsLast7.reduce((s,a) => s + a.distance/1000, 0);
+  const kmLast28 = runsLast28.reduce((s,a) => s + a.distance/1000, 0);
 
-  // Find date range of imported activities
+  // Other activities in last 28 days
+  const otherLast28 = acts.filter(a =>
+    !(a.type === 'Run' || a.sport_type === 'Run') &&
+    (now - new Date(a.start_date).getTime()) < 28*24*60*60*1000
+  );
+
+  // Date range
   const dates = acts.map(a => new Date(a.start_date)).sort((a,b) => a-b);
   const oldestDate = dates.length ? dates[0].toLocaleDateString('pt-BR', {day:'2-digit',month:'short',year:'numeric'}) : '—';
   const newestDate = dates.length ? dates[dates.length-1].toLocaleDateString('pt-BR', {day:'2-digit',month:'short'}) : '—';
 
-  // ACWR real
+  // ACWR based on running only
   const acuteLoad = kmLast7;
   const chronicLoad = kmLast28 / 4;
   const acwr = chronicLoad > 0 ? (acuteLoad / chronicLoad).toFixed(2) : '—';
 
-  // Update state with real data
+  // Update state
   if (state.perfil) {
     state.perfil.stravaVolume7 = Math.round(kmLast7 * 10) / 10;
     state.perfil.stravaVolume28 = Math.round(kmLast28 * 10) / 10;
     state.perfil.stravaACWR = acwr;
     state.perfil.stravaActivities = acts.length;
-    if (chronicLoad > 0) {
-      state.plano && (state.plano.acwr_estimado = acwr);
-    }
+    state.perfil.stravaOtherActivities = otherLast28.length;
+    if (chronicLoad > 0) state.plano && (state.plano.acwr_estimado = acwr);
   }
 
   // Show connected UI
@@ -2622,55 +2629,71 @@ function renderStravaConnected() {
 
   document.getElementById('strava-summary-stats').innerHTML = `
     <div class="stat-card">
-      <div class="stat-label">Volume 7 dias</div>
+      <div class="stat-label">Corridas 7 dias</div>
       <div class="stat-value">${Math.round(kmLast7)}<span class="stat-unit">km</span></div>
-      <div class="stat-delta good">${last7.length} corrida${last7.length !== 1 ? 's' : ''}</div>
+      <div class="stat-delta good">${runsLast7.length} corrida${runsLast7.length !== 1 ? 's' : ''}</div>
     </div>
     <div class="stat-card">
-      <div class="stat-label">Volume 28 dias</div>
+      <div class="stat-label">Corridas 28 dias</div>
       <div class="stat-value">${Math.round(kmLast28)}<span class="stat-unit">km</span></div>
-      <div class="stat-delta good">${last28.length} corrida${last28.length !== 1 ? 's' : ''}</div>
+      <div class="stat-delta good">${runsLast28.length} corridas · ${otherLast28.length} outras ativ.</div>
     </div>
     <div class="stat-card">
-      <div class="stat-label">ACWR real</div>
+      <div class="stat-label">ACWR (corrida)</div>
       <div class="stat-value" style="color:${acwr>1.3?'var(--red)':acwr<0.8?'var(--amber)':'var(--green)'}">${acwr}</div>
       <div class="stat-delta ${acwr>1.3?'bad':acwr<0.8?'warn':'good'}">${acwr>1.3?'⚠ Zona de risco':acwr<0.8?'↓ Abaixo do ideal':'✓ Zona segura'}</div>
     </div>
   `;
 
+  // Activity type icons
+  const typeIcon = t => ({
+    'Run':'🏃','VirtualRun':'🏃','TrailRun':'🏔️',
+    'Ride':'🚴','VirtualRide':'🚴','EBikeRide':'🚴',
+    'Swim':'🏊','WeightTraining':'🏋️','Workout':'💪',
+    'Yoga':'🧘','Pilates':'🤸','Walk':'🚶','Hike':'🥾',
+    'Soccer':'⚽','Tennis':'🎾','Crossfit':'🔥','Rowing':'🚣'
+  }[t] || '⬡';
+
   // Data transparency banner
   const transpHtml = acts.length > 0 ? `
-    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--text2);line-height:1.7">
-      <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:4px">Dados importados</div>
-      ✓ <strong style="color:var(--text)">${acts.length} corridas</strong> importadas
-      &nbsp;·&nbsp; Período: <strong style="color:var(--text)">${oldestDate} → ${newestDate}</strong>
-      &nbsp;·&nbsp; ${last28.length} corridas nos últimos 28 dias usadas para calcular ACWR
-      ${acts.length < 20 ? `<br>⚠ Menos de 20 corridas — histórico pode ser insuficiente para ACWR preciso (mínimo recomendado: 4 semanas completas)` : ''}
+    <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:14px;font-size:12px;color:#0369a1;line-height:1.7">
+      <div style="font-family:'DM Mono',monospace;font-size:10px;color:#0284c7;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:4px">Dados importados</div>
+      ✓ <strong>${acts.length} atividades</strong> importadas (${runs.length} corridas + ${acts.length - runs.length} outros esportes)
+      &nbsp;·&nbsp; Período: <strong>${oldestDate} → ${newestDate}</strong>
+      ${runs.length < 8 ? `<br>⚠ Poucas corridas — histórico pode ser insuficiente para ACWR preciso (recomendado: ≥4 semanas de corridas)` : ''}
+      ${otherLast28.length > 0 ? `<br>📊 ${otherLast28.length} atividades complementares nos últimos 28 dias consideradas na carga total` : ''}
     </div>
-  ` : `<div style="color:var(--amber);font-size:12px;margin-bottom:12px">⚠ Nenhuma corrida encontrada. Verifique se seu perfil Strava é público.</div>`;
+  ` : `<div style="color:var(--amber);font-size:12px;margin-bottom:12px">⚠ Nenhuma atividade encontrada.</div>`;
 
-  // Activity list — show all imported
+  // Activity list — all types
   const listHtml = acts.length ? acts.map(a => {
     const date = new Date(a.start_date).toLocaleDateString('pt-BR', {day:'2-digit',month:'short'});
-    const km = (a.distance/1000).toFixed(1);
-    const pace = a.average_speed > 0 ? formatPace(a.average_speed) : '—';
+    const km = a.distance > 0 ? (a.distance/1000).toFixed(1) + ' km' : '—';
+    const duration = a.moving_time > 0 ? Math.round(a.moving_time/60) + ' min' : '—';
+    const isRun = a.type === 'Run' || a.sport_type === 'Run';
+    const pace = isRun && a.average_speed > 0 ? formatPace(a.average_speed) : '—';
     const hr = a.has_heartrate ? a.average_heartrate + ' bpm' : '—';
     const isLast28 = (now - new Date(a.start_date).getTime()) < 28*24*60*60*1000;
+    const icon = typeIcon(a.type || a.sport_type);
     return `<div class="activity-row" style="${isLast28 ? '' : 'opacity:0.5'}">
       <div>
-        <div class="activity-name">${a.name} ${isLast28 ? '' : '<span style="font-size:10px;color:var(--text3)">(fora dos 28 dias)</span>'}</div>
-        <div class="activity-meta">${date} · ${a.type}</div>
+        <div class="activity-name">${icon} ${a.name} ${isLast28 ? '' : '<span style="font-size:10px;color:var(--text3)">(fora dos 28 dias)</span>'}</div>
+        <div class="activity-meta">${date} · ${a.type || a.sport_type}</div>
       </div>
       <div class="activity-stats">
-        <div><div class="activity-stat-val">${km}</div><div class="activity-stat-lbl">km</div></div>
-        <div><div class="activity-stat-val">${pace}</div><div class="activity-stat-lbl">pace</div></div>
+        <div><div class="activity-stat-val">${km}</div><div class="activity-stat-lbl">${isRun ? 'km' : 'distância'}</div></div>
+        <div><div class="activity-stat-val">${isRun ? pace : duration}</div><div class="activity-stat-lbl">${isRun ? 'pace' : 'duração'}</div></div>
         <div><div class="activity-stat-val">${hr}</div><div class="activity-stat-lbl">FC média</div></div>
       </div>
     </div>`;
   }).join('') : '';
 
-  document.getElementById('strava-activities-list').innerHTML = transpHtml + listHtml || '<div class="empty"><div class="empty-text">Nenhuma corrida encontrada.</div></div>';
+  document.getElementById('strava-activities-list').innerHTML = transpHtml + listHtml;
 }
+
+
+
+
 
 function formatPace(metersPerSec) {
   if (!metersPerSec || metersPerSec === 0) return '—';
