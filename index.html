@@ -767,6 +767,7 @@ input[type="range"] {
     <div style="font-family:'DM Serif Display',serif;font-size:22px;color:#fff">Stride <span style="font-size:13px;color:rgba(255,255,255,0.4);font-family:'DM Mono',monospace">Admin</span></div>
     <div style="display:flex;align-items:center;gap:12px">
       <span id="admin-user-name" style="font-size:13px;color:rgba(255,255,255,0.6)"></span>
+      <button onclick="adminOpenMyProfile()" style="padding:7px 14px;background:rgba(74,222,128,0.15);border:1px solid rgba(74,222,128,0.3);border-radius:6px;color:#4ade80;font-size:12px;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif">🏃 Meu treino</button>
       <button onclick="doLogout()" style="padding:7px 14px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:6px;color:#fff;font-size:12px;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif">Sair</button>
     </div>
   </div>
@@ -4087,7 +4088,57 @@ async function doCreateAthlete() {
   }
 }
 
-// ── FIREBASE AUTH STATE LISTENER ─────────────────────────────
+async function adminOpenMyProfile() {
+  // Load admin's own athlete data
+  const userData = await loadUserData(currentUser.uid);
+
+  if (userData?.perfil) {
+    state.perfil = userData.perfil;
+    state.plano = userData.plano || null;
+    state.semana = userData.semana || [];
+    state.sonoHistory = userData.sonoHistory || [];
+    calcularReadiness();
+    atualizarDashboard();
+    updateSidebarProfile();
+  } else {
+    state.perfil = null;
+    state.plano = null;
+    state.semana = [];
+    state.sonoHistory = [];
+  }
+
+  document.getElementById('admin-screen').style.display = 'none';
+  document.getElementById('main-app').style.display = 'flex';
+
+  // Add persistent back button
+  let backBtn = document.getElementById('admin-back-btn');
+  if (!backBtn) {
+    backBtn = document.createElement('button');
+    backBtn.id = 'admin-back-btn';
+    backBtn.textContent = '← Painel Admin';
+    backBtn.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:999;padding:10px 18px;background:#1a2332;color:#fff;border:none;border-radius:8px;font-size:13px;cursor:pointer;font-family:"Plus Jakarta Sans",sans-serif;box-shadow:0 4px 12px rgba(0,0,0,0.2)';
+    backBtn.onclick = async () => {
+      // Save admin's athlete data before going back
+      saveCurrentProfile();
+      await showAdminPanel(currentUser);
+      backBtn.remove();
+    };
+    document.body.appendChild(backBtn);
+  }
+
+  navigate(state.perfil ? 'dashboard' : 'onboarding');
+}
+
+// Override saveCurrentProfile to save admin's own profile correctly
+const _baseSaveProfile = saveCurrentProfile;
+function saveCurrentProfile() {
+  if (!currentUser || !state.perfil) return;
+  const data = {
+    perfil: state.perfil, plano: state.plano, semana: state.semana,
+    sonoHistory: state.sonoHistory, updatedAt: new Date().toISOString()
+  };
+  saveUserDataToFirestore(currentUser.uid, data).catch(e => console.warn('Save error:', e));
+}
 function initFirebase() {
   const { onAuthStateChanged, getRedirectResult, doc, getDoc, setDoc } = window._fbFns;
 
