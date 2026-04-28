@@ -725,6 +725,17 @@ input[type="range"] {
       <div class="readiness-score amber" id="readiness-num">--</div>
       <div class="readiness-desc" id="readiness-desc">Complete o perfil</div>
     </div>
+
+    <div class="readiness-card" style="margin-top:8px" id="usage-card">
+      <div class="readiness-label">Consultas hoje</div>
+      <div style="display:flex;align-items:baseline;gap:4px">
+        <div class="readiness-score" id="usage-num" style="font-size:22px">0</div>
+        <div style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace">/ 20</div>
+      </div>
+      <div style="height:3px;background:var(--surface);border-radius:2px;margin-top:6px;overflow:hidden">
+        <div id="usage-bar" style="height:100%;background:var(--green);border-radius:2px;transition:width 0.3s;width:0%"></div>
+      </div>
+    </div>
   </aside>
 
   <!-- MAIN -->
@@ -1788,8 +1799,6 @@ Histórico de lesões: ${lesoes.join(', ') || 'nenhuma'}
 Esportes que ajudam na prevenção: ${esportesPrevcao.join(', ') || 'nenhum'}
 Esportes que adicionam carga extra: ${esportesCarga.join(', ') || 'nenhum'}
 
-CRÍTICO — REGRA DE VOLUME: O atleta já corre ${base}. O plano DEVE respeitar este volume como base. NÃO reduza mais de 10% nem aumente mais de 10% na primeira semana (Buist et al., 2010). Se o volume atual for 45km, o plano deve ter entre 40-50km total de corrida. Ignorar o volume atual é um erro grave.
-
 IMPORTANTE: Considere os esportes complementares ao calcular a carga total semanal (ACWR). Yoga/Pilates/alongamento reduzem risco de lesão e podem substituir dias de força. Ciclismo/futebol/crossfit adicionam carga e devem ser contabilizados. O tempo de prática é fundamental: menos de 1 ano = tecido conjuntivo ainda em adaptação, alto risco de overuse.
 
 Crie um plano para os próximos 7 dias no seguinte formato JSON estrito (retorne APENAS o JSON, sem markdown, sem explicação):
@@ -2354,7 +2363,32 @@ function renderPerfil() {
 // ============================================================
 // CLAUDE API
 // ============================================================
+// Usage limiter — max calls per day per browser
+const DAILY_LIMIT = 20;
+function getUsageToday() {
+  const key = 'stride_usage_' + new Date().toISOString().slice(0,10);
+  return parseInt(localStorage.getItem(key) || '0');
+}
+function incrementUsage() {
+  const key = 'stride_usage_' + new Date().toISOString().slice(0,10);
+  const n = getUsageToday() + 1;
+  localStorage.setItem(key, n);
+  return n;
+}
+
 async function callClaude(prompt) {
+  // Check daily limit
+  const used = getUsageToday();
+  if (used >= DAILY_LIMIT) {
+    throw new Error(`Limite diário de ${DAILY_LIMIT} consultas atingido. Tente novamente amanhã.`);
+  }
+  incrementUsage();
+  updateUsageDisplay();
+  const remaining = DAILY_LIMIT - used - 1;
+  if (remaining <= 3 && remaining >= 0) {
+    setTimeout(() => alert(`⚠️ Você tem apenas ${remaining} consulta(s) restante(s) hoje.`), 100);
+  }
+
   const langName = (typeof LANG_NAMES !== 'undefined' ? LANG_NAMES[currentLang] : null) || 'Portuguese';
   const systemPrompt = `You are an expert in sports science, running training, and injury prevention. Always respond in ${langName}. Base your answers on scientific evidence. Be direct and practical. When citing papers use format: Author(s), year.`;
   const isNetlify = window.location.hostname.includes('netlify.app');
@@ -2366,10 +2400,7 @@ async function callClaude(prompt) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ prompt: systemPrompt + '\n\n' + prompt })
     });
-    if (!response.ok) {
-  const errText = await response.text();
-  throw new Error('API error: ' + response.status + ' — ' + errText.slice(0, 200));
-}
+    if (!response.ok) throw new Error('API error: ' + response.status);
     const text = await response.text();
     let data;
     try { data = JSON.parse(text); } catch(e) { throw new Error('Parse error: ' + text.slice(0,100)); }
@@ -2388,10 +2419,7 @@ async function callClaude(prompt) {
         messages: [{ role: 'user', content: prompt }]
       })
     });
-    if (!response.ok) {
-  const errText = await response.text();
-  throw new Error('API error: ' + response.status + ' — ' + errText.slice(0, 200));
-}
+    if (!response.ok) throw new Error('API error: ' + response.status);
     const data = await response.json();
     return data.content.map(b => b.text || '').join('');
   }
@@ -2492,26 +2520,18 @@ async function loadStravaData() {
     STRAVA.athlete = await athRes.json();
 
     showStravaLoading('Importando atividades...');
-    // Fetch last 30 days, single request, max 30 activities, with timeout
-    const since = Math.floor(Date.now()/1000) - 30*24*60*60;
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 8000);
+    // Fetch last 30 activities with robust timeout
     let allActs = [];
     try {
-      const actsRes = await fetch(
-        `https://www.strava.com/api/v3/athlete/activities?after=${since}&per_page=30&page=1`,
-        { headers: { 'Authorization': 'Bearer ' + STRAVA.token }, signal: controller.signal }
-      );
-      clearTimeout(timeout);
-      if (!actsRes.ok) throw new Error('HTTP ' + actsRes.status);
-      allActs = await actsRes.json();
+      const fetchPromise = fetch(
+        `https://www.strava.com/api/v3/athlete/activities?per_page=30&page=1`,
+        { headers: { 'Authorization': 'Bearer ' + STRAVA.token } }
+      ).then(r => r.ok ? r.json() : []);
+
+      const timeoutPromise = new Promise(resolve => setTimeout(() => resolve([]), 8000));
+      allActs = await Promise.race([fetchPromise, timeoutPromise]);
     } catch(e) {
-      clearTimeout(timeout);
-      if (e.name === 'AbortError') {
-        allActs = [];
-      } else {
-        throw e;
-      }
+      allActs = [];
     }
     // Filter runs only
     STRAVA.activities = Array.isArray(allActs) ? allActs.filter(a => a.type === 'Run' || a.sport_type === 'Run') : [];
@@ -2679,7 +2699,12 @@ Máximo 250 palavras. Seja específico com números.`;
 async function syncStrava() {
   if (!STRAVA.token) return;
   showStravaLoading('Sincronizando...');
-  await loadStravaData();
+  try {
+    await loadStravaData();
+  } catch(e) {
+    hideStravaLoading();
+    alert('Erro ao sincronizar: ' + e.message);
+  }
 }
 
 function disconnectStrava() {
@@ -3305,10 +3330,22 @@ setInterval(saveCurrentProfile, 30000);
 // Patch generateInitialPlan to save after creating plan
 const _origGenerate = window.generateInitialPlan;
 
+function updateUsageDisplay() {
+  const used = getUsageToday();
+  const el = document.getElementById('usage-num');
+  const bar = document.getElementById('usage-bar');
+  if (!el) return;
+  el.textContent = used;
+  el.style.color = used >= 18 ? 'var(--red)' : used >= 14 ? 'var(--amber)' : 'var(--green)';
+  if (bar) bar.style.width = Math.min(100, (used / DAILY_LIMIT) * 100) + '%';
+  if (bar) bar.style.background = used >= 18 ? 'var(--red)' : used >= 14 ? 'var(--amber)' : 'var(--green)';
+}
+
 // ============================================================
 // INIT
 // ============================================================
 renderSleepHistory();
+updateUsageDisplay();
 setTimeout(initLangIds, 100);
 
 // Migrate old single-profile localStorage to new multi-profile format
