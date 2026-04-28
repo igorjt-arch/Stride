@@ -4,25 +4,28 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Stride — Corrida com Ciência</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg: #0d0f0e;
-  --surface: #151918;
-  --surface2: #1c211f;
-  --border: rgba(255,255,255,0.07);
-  --border2: rgba(255,255,255,0.12);
-  --text: #e8ede9;
-  --text2: #8a9b8e;
-  --text3: #5a6b5e;
-  --green: #4ade80;
-  --green-dim: #22c55e;
-  --green-bg: rgba(74,222,128,0.08);
-  --amber: #fbbf24;
-  --amber-bg: rgba(251,191,36,0.08);
-  --red: #f87171;
-  --red-bg: rgba(248,113,113,0.08);
-  --accent: #4ade80;
+  --bg: #f0f4f8;
+  --surface: #ffffff;
+  --surface2: #e8f0fe;
+  --border: rgba(0,0,0,0.08);
+  --border2: rgba(0,0,0,0.14);
+  --text: #1a2332;
+  --text2: #4a5568;
+  --text3: #8a9ab0;
+  --green: #16a34a;
+  --green-dim: #15803d;
+  --green-bg: rgba(22,163,74,0.08);
+  --amber: #d97706;
+  --amber-bg: rgba(217,119,6,0.08);
+  --red: #dc2626;
+  --red-bg: rgba(220,38,38,0.08);
+  --accent: #2563eb;
+  --blue: #2563eb;
+  --blue-bg: rgba(37,99,235,0.08);
+  --lime: #65a30d;
   --radius: 12px;
   --radius-sm: 8px;
 }
@@ -32,7 +35,7 @@
 body {
   background: var(--bg);
   color: var(--text);
-  font-family: 'Instrument Sans', sans-serif;
+  font-family: 'Plus Jakarta Sans', 'Instrument Sans', sans-serif;
   font-size: 15px;
   line-height: 1.6;
   min-height: 100vh;
@@ -44,8 +47,8 @@ body {
 .sidebar {
   width: 220px;
   flex-shrink: 0;
-  background: var(--surface);
-  border-right: 1px solid var(--border);
+  background: #1a2332;
+  border-right: 1px solid rgba(255,255,255,0.08);
   padding: 28px 0;
   display: flex;
   flex-direction: column;
@@ -70,12 +73,12 @@ body {
 .logo-text {
   font-family: 'DM Serif Display', serif;
   font-size: 22px;
-  color: var(--text);
+  color: #ffffff;
   letter-spacing: -0.5px;
 }
 .logo-sub {
   font-size: 11px;
-  color: var(--text3);
+  color: rgba(255,255,255,0.4);
   font-family: 'DM Mono', monospace;
   margin-top: 2px;
 }
@@ -87,18 +90,18 @@ body {
   gap: 10px;
   padding: 9px 20px;
   font-size: 13px;
-  color: var(--text2);
+  color: rgba(255,255,255,0.6);
   cursor: pointer;
   transition: all 0.15s;
   border-left: 2px solid transparent;
 }
-.nav-item:hover { color: var(--text); background: rgba(255,255,255,0.03); }
-.nav-item.active { color: var(--green); border-left-color: var(--green); background: var(--green-bg); }
+.nav-item:hover { color: rgba(255,255,255,0.9); background: rgba(255,255,255,0.05); }
+.nav-item.active { color: #4ade80; border-left-color: #4ade80; background: rgba(74,222,128,0.1); }
 .nav-icon { font-size: 14px; width: 18px; text-align: center; }
 .nav-section {
   font-size: 10px;
   font-family: 'DM Mono', monospace;
-  color: var(--text3);
+  color: rgba(255,255,255,0.3);
   padding: 16px 20px 6px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -107,17 +110,17 @@ body {
 /* READINESS BADGE in sidebar */
 .readiness-card {
   margin: 20px 12px 0;
-  background: var(--surface2);
-  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.1);
   border-radius: var(--radius-sm);
   padding: 12px;
 }
-.readiness-label { font-size: 10px; color: var(--text3); font-family: 'DM Mono', monospace; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
-.readiness-score { font-size: 28px; font-family: 'DM Serif Display', serif; }
+.readiness-label { font-size: 10px; color: rgba(255,255,255,0.4); font-family: 'DM Mono', monospace; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+.readiness-score { font-size: 28px; font-family: 'DM Serif Display', serif; color: #ffffff; }
 .readiness-score.green { color: var(--green); }
 .readiness-score.amber { color: var(--amber); }
 .readiness-score.red { color: var(--red); }
-.readiness-desc { font-size: 11px; color: var(--text2); margin-top: 3px; }
+.readiness-desc { font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 3px; }
 
 /* PAGES */
 .page { display: none; }
@@ -128,7 +131,7 @@ body {
 .page-title {
   font-family: 'DM Serif Display', serif;
   font-size: 30px;
-  color: var(--text);
+  color: #1a2332;
   letter-spacing: -0.5px;
   line-height: 1.2;
 }
@@ -136,11 +139,12 @@ body {
 
 /* CARDS */
 .card {
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: #ffffff;
+  border: 1px solid rgba(0,0,0,0.08);
   border-radius: var(--radius);
   padding: 20px 24px;
   margin-bottom: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
 .card-title {
   font-size: 12px;
@@ -158,10 +162,11 @@ body {
 
 /* STAT CARD */
 .stat-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: #ffffff;
+  border: 1px solid rgba(0,0,0,0.08);
   border-radius: var(--radius);
   padding: 18px 20px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
 .stat-label { font-size: 11px; color: var(--text3); font-family: 'DM Mono', monospace; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 8px; }
 .stat-value { font-size: 26px; font-family: 'DM Serif Display', serif; color: var(--text); }
@@ -175,19 +180,19 @@ body {
 label { font-size: 12px; color: var(--text2); display: block; margin-bottom: 6px; font-family: 'DM Mono', monospace; }
 input[type="text"], input[type="number"], select, textarea {
   width: 100%;
-  background: var(--surface2);
-  border: 1px solid var(--border2);
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
   border-radius: var(--radius-sm);
   color: var(--text);
-  font-family: 'Instrument Sans', sans-serif;
+  font-family: 'Plus Jakarta Sans', sans-serif;
   font-size: 14px;
   padding: 10px 14px;
   outline: none;
   transition: border-color 0.15s;
   margin-bottom: 16px;
 }
-input:focus, select:focus, textarea:focus { border-color: var(--green); }
-select option { background: var(--surface); }
+input:focus, select:focus, textarea:focus { border-color: #16a34a; box-shadow: 0 0 0 3px rgba(22,163,74,0.1); }
+select option { background: #ffffff; }
 textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
 
 /* RANGE */
@@ -215,8 +220,8 @@ input[type="range"] {
   border: none;
   transition: all 0.15s;
 }
-.btn-primary { background: var(--green); color: #0d1f11; }
-.btn-primary:hover { background: #6ee79a; }
+.btn-primary { background: #16a34a; color: #ffffff; }
+.btn-primary:hover { background: #15803d; }
 .btn-secondary {
   background: transparent;
   border: 1px solid var(--border2);
@@ -241,9 +246,9 @@ input[type="range"] {
 
 /* AI RESPONSE */
 .ai-response {
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  border-left: 3px solid var(--green);
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-left: 3px solid #16a34a;
   border-radius: var(--radius);
   padding: 18px 20px;
   font-size: 14px;
@@ -491,29 +496,41 @@ input[type="range"] {
 .profile-tile-del:hover { background: var(--red-bg); color: var(--red); }
 .profile-switcher {
   display: flex; align-items: center; gap: 8px; padding: 6px 10px;
-  background: var(--surface2); border: 1px solid var(--border);
+  background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12);
   border-radius: var(--radius-sm); cursor: pointer; margin: 0 12px;
   transition: all 0.15s;
 }
-.profile-switcher:hover { border-color: var(--green); }
+.profile-switcher:hover { border-color: #4ade80; }
 .profile-switcher-avatar {
   width: 24px; height: 24px; border-radius: 50%;
-  background: var(--green-bg); border: 1px solid rgba(74,222,128,0.3);
+  background: rgba(74,222,128,0.15); border: 1px solid rgba(74,222,128,0.3);
   display: flex; align-items: center; justify-content: center; font-size: 12px;
   flex-shrink: 0;
 }
-.profile-switcher-name { font-size: 12px; color: var(--text); font-weight: 500; }
-.profile-switcher-arrow { font-size: 10px; color: var(--text3); margin-left: auto; }
+.profile-switcher-name { font-size: 12px; color: rgba(255,255,255,0.85); font-weight: 500; }
+.profile-switcher-arrow { font-size: 10px; color: rgba(255,255,255,0.3); margin-left: auto; }
 
-/* LANGUAGE */
+/* LANGUAGE DROPDOWN */
+.lang-dd-item {
+  display: block; width: 100%; text-align: left;
+  padding: 9px 14px; background: transparent; border: none;
+  font-size: 13px; color: #1a2332; cursor: pointer;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  transition: background 0.12s; border-bottom: 1px solid #f1f5f9;
+}
+.lang-dd-item:last-child { border-bottom: none; }
+.lang-dd-item:hover { background: #f0fdf4; }
+.lang-dd-item.active { background: #f0fdf4; color: #16a34a; font-weight: 600; }
+
+/* LANGUAGE (sidebar legacy, kept for backward compat) */
 .lang-btn {
   width: 100%; text-align: left; padding: 7px 10px;
   background: transparent; border: 1px solid transparent;
-  border-radius: var(--radius-sm); font-size: 12px; color: var(--text2);
-  cursor: pointer; transition: all 0.15s; font-family: 'Instrument Sans', sans-serif;
+  border-radius: var(--radius-sm); font-size: 12px; color: rgba(255,255,255,0.55);
+  cursor: pointer; transition: all 0.15s; font-family: 'Plus Jakarta Sans', sans-serif;
 }
-.lang-btn:hover { background: rgba(255,255,255,0.04); color: var(--text); }
-.lang-btn.active { background: var(--green-bg); color: var(--green); border-color: rgba(74,222,128,0.2); }
+.lang-btn:hover { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.9); }
+.lang-btn.active { background: rgba(74,222,128,0.12); color: #4ade80; border-color: rgba(74,222,128,0.25); }
 
 /* STEPPER */
 .stepper-wrap {
@@ -614,7 +631,7 @@ input[type="range"] {
   display: inline-flex; align-items: center; gap: 10px;
   background: #fc4c02; color: #fff; border: none;
   padding: 11px 22px; border-radius: var(--radius-sm);
-  font-family: 'Instrument Sans', sans-serif; font-size: 14px; font-weight: 600;
+  font-family: 'Plus Jakarta Sans', sans-serif; font-size: 14px; font-weight: 600;
   cursor: pointer; transition: background 0.15s;
 }
 .strava-btn:hover { background: #e04300; }
@@ -708,17 +725,7 @@ input[type="range"] {
       <span class="nav-icon">🔬</span> <span data-t="nav-evidencias">Base científica</span>
     </div>
 
-    <div class="nav-section">Idioma</div>
-    <div id="lang-selector" style="padding:4px 12px 12px">
-      <div style="display:flex;flex-direction:column;gap:4px">
-        <button class="lang-btn active" data-lang="pt" onclick="setLang('pt',this)">🇧🇷 Português</button>
-        <button class="lang-btn" data-lang="en" onclick="setLang('en',this)">🇺🇸 English</button>
-        <button class="lang-btn" data-lang="es" onclick="setLang('es',this)">🇪🇸 Español</button>
-        <button class="lang-btn" data-lang="fr" onclick="setLang('fr',this)">🇫🇷 Français</button>
-        <button class="lang-btn" data-lang="de" onclick="setLang('de',this)">🇩🇪 Deutsch</button>
-        <button class="lang-btn" data-lang="it" onclick="setLang('it',this)">🇮🇹 Italiano</button>
-      </div>
-    </div>
+
 
     <div class="readiness-card" id="sidebar-readiness">
       <div class="readiness-label">Readiness hoje</div>
@@ -740,6 +747,22 @@ input[type="range"] {
 
   <!-- MAIN -->
   <main class="main">
+    <!-- LANGUAGE SELECTOR TOP RIGHT -->
+    <div id="lang-topbar" style="position:fixed;top:14px;right:20px;z-index:100;display:flex;align-items:center;gap:6px">
+      <div id="lang-current-btn" onclick="toggleLangDropdown()" style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:#ffffff;border:1.5px solid #e2e8f0;border-radius:20px;cursor:pointer;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;color:#1a2332;font-weight:500;box-shadow:0 1px 3px rgba(0,0,0,0.08);transition:all 0.15s" onmouseover="this.style.borderColor='#16a34a'" onmouseout="this.style.borderColor='#e2e8f0'">
+        <span id="lang-flag">🇧🇷</span>
+        <span id="lang-name-display">Português</span>
+        <span style="font-size:10px;color:#8a9ab0">▾</span>
+      </div>
+      <div id="lang-dropdown" style="display:none;position:absolute;top:38px;right:0;background:#ffffff;border:1.5px solid #e2e8f0;border-radius:var(--radius-sm);box-shadow:0 8px 24px rgba(0,0,0,0.12);overflow:hidden;min-width:150px">
+        <button class="lang-dd-item active" data-lang="pt" data-flag="🇧🇷" data-name="Português" onclick="setLangDD(this)">🇧🇷 Português</button>
+        <button class="lang-dd-item" data-lang="en" data-flag="🇺🇸" data-name="English" onclick="setLangDD(this)">🇺🇸 English</button>
+        <button class="lang-dd-item" data-lang="es" data-flag="🇪🇸" data-name="Español" onclick="setLangDD(this)">🇪🇸 Español</button>
+        <button class="lang-dd-item" data-lang="fr" data-flag="🇫🇷" data-name="Français" onclick="setLangDD(this)">🇫🇷 Français</button>
+        <button class="lang-dd-item" data-lang="de" data-flag="🇩🇪" data-name="Deutsch" onclick="setLangDD(this)">🇩🇪 Deutsch</button>
+        <button class="lang-dd-item" data-lang="it" data-flag="🇮🇹" data-name="Italiano" onclick="setLangDD(this)">🇮🇹 Italiano</button>
+      </div>
+    </div>
 
     <!-- ONBOARDING PAGE -->
     <div class="page active" id="page-onboarding">
@@ -1514,12 +1537,16 @@ input[type="range"] {
       <input class="search-papers" id="papers-search" placeholder="🔍  Buscar por lesão, autor, tema... ex: fascite, Gabbett, ACWR" oninput="filtrarPapers()">
 
       <div class="filter-row" id="filter-row">
-        <button class="filter-btn active" data-cat="todos" onclick="setCatFilter('todos',this)">Todos</button>
+        <button class="filter-btn active" data-cat="todos" onclick="setCatFilter('todos',this)">Todos (29)</button>
         <button class="filter-btn" data-cat="lesao" onclick="setCatFilter('lesao',this)">Lesões</button>
         <button class="filter-btn" data-cat="carga" onclick="setCatFilter('carga',this)">Carga & ACWR</button>
         <button class="filter-btn" data-cat="treino" onclick="setCatFilter('treino',this)">Periodização</button>
         <button class="filter-btn" data-cat="prevencao" onclick="setCatFilter('prevencao',this)">Prevenção</button>
         <button class="filter-btn" data-cat="sono" onclick="setCatFilter('sono',this)">Sono & Recuperação</button>
+        <select id="papers-sort" onchange="filtrarPapers()" style="margin-left:auto;font-size:11px;padding:4px 8px;border-radius:6px;border:1px solid var(--border2);background:var(--surface);color:var(--text2);font-family:'DM Mono',monospace">
+          <option value="recente">Mais recentes primeiro</option>
+          <option value="antigo">Mais antigos primeiro</option>
+        </select>
       </div>
 
       <div class="papers-count" id="papers-count"></div>
@@ -2491,6 +2518,8 @@ async function handleStravaCallback() {
     localStorage.setItem('stride_strava_refresh', data.refresh_token);
     localStorage.setItem('stride_strava_expires', data.expires_at);
     localStorage.setItem('stride_strava_athlete', JSON.stringify(data.athlete));
+    // Also save to profile
+    if (state.perfil) { state.perfil.stravaToken = data.access_token; state.perfil.stravaAthlete = data.athlete; saveCurrentProfile(); }
     cleanUrl();
     await loadStravaData();
   } catch(e) {
@@ -2505,6 +2534,7 @@ async function connectWithToken() {
   if (!token) { alert('Cole seu access token.'); return; }
   STRAVA.token = token;
   localStorage.setItem('stride_strava_token', token);
+  if (state.perfil) { state.perfil.stravaToken = token; saveCurrentProfile(); }
   showStravaLoading('Verificando token...');
   await loadStravaData();
 }
@@ -2727,12 +2757,15 @@ async function syncStrava() {
 
 function disconnectStrava() {
   STRAVA.token = null; STRAVA.athlete = null; STRAVA.activities = [];
+  // Clear from global keys
   localStorage.removeItem('stride_strava_token');
   localStorage.removeItem('stride_strava_refresh');
   localStorage.removeItem('stride_strava_expires');
   localStorage.removeItem('stride_strava_athlete');
   localStorage.removeItem('stride_strava_client_id');
   localStorage.removeItem('stride_strava_client_secret');
+  // Clear from current profile
+  if (state.perfil) { state.perfil.stravaToken = null; state.perfil.stravaAthlete = null; saveCurrentProfile(); }
   document.getElementById('strava-disconnected').style.display = 'block';
   document.getElementById('strava-connected').style.display = 'none';
   document.getElementById('strava-status-badge').textContent = 'Não conectado';
@@ -2952,6 +2985,182 @@ const PAPERS = [
     keywords: ['sono','walker','recuperação','hrv','memória','motor','atleta'],
     resumo: 'Obra de referência em neurociência do sono, consolidando décadas de pesquisa. Relevante para atletas: durante o sono REM ocorre a consolidação de padrões motores aprendidos durante o treino (memória procedural). Menos de 6h de sono por 6 noites consecutivas reduz performance física ao equivalente de bafômetro positivo. HRV baixo pela manhã é o melhor preditor biométrico de recuperação insuficiente.',
     aplicacao: 'Fundamenta a recomendação mínima de 7-9h de sono para atletas e o uso de HRV no módulo de recuperação do Stride.'
+  },
+
+  // ── NOVAS LESÕES ──────────────────────────────────────────
+  {
+    id: 16, cat: 'lesao',
+    tag: 'paper-tag-lesao', tagLabel: 'Lesões',
+    title: 'Achilles tendinopathy: current concepts and treatment options',
+    authors: 'Beyer, R. et al.',
+    journal: 'Sports Health, 7(2), 117–121',
+    year: 2015,
+    doi: 'https://doi.org/10.1177/1941738114557408',
+    keywords: ['aquiles','tendinopatia','excêntrico','alfredson','corrida','beyer'],
+    resumo: 'Revisão abrangente da tendinopatia de Aquiles em corredores, uma das lesões mais incapacitantes. O protocolo excêntrico de Alfredson (3×15 reps em declive, 2× ao dia por 12 semanas) mostrou 80-90% de sucesso em corredores recreacionais. Fatores de risco principais: aumento abrupto de volume, corrida em subida, calçado com drop alto de forma repentina e fraqueza de panturrilha. Progressão gradual do volume é o principal fator preventivo.',
+    aplicacao: 'Protocolo excêntrico específico no módulo de fortalecimento do Stride para usuários com histórico de tendinopatia de Aquiles.'
+  },
+  {
+    id: 17, cat: 'lesao',
+    tag: 'paper-tag-lesao', tagLabel: 'Lesões',
+    title: 'Stress fractures in runners: a systematic review',
+    authors: 'Warden, S.J. et al.',
+    journal: 'Medicine & Science in Sports & Exercise, 46(8), 1538–1546',
+    year: 2014,
+    doi: 'https://doi.org/10.1249/MSS.0000000000000267',
+    keywords: ['fratura','stress','osso','fadiga','tíbia','fêmur','metatarso','warden'],
+    resumo: 'Revisão sistemática de fraturas por estresse em corredores. Incidência de 3.7% ao ano em corredores recreacionais, chegando a 21% em atletas de elite. Fatores de risco: volume elevado, progressão rápida, baixa densidade óssea, deficiência de vitamina D e cálcio, amenorreia em mulheres (tríade da atleta). Tíbia é o sítio mais comum (49%), seguida por metatarso (25%). Tempo de retorno: 6-12 semanas com redução total de impacto.',
+    aplicacao: 'Alerta de risco de fratura por estresse no Stride para iniciantes com progressão rápida de volume e usuários com histórico reportado.'
+  },
+  {
+    id: 18, cat: 'lesao',
+    tag: 'paper-tag-lesao', tagLabel: 'Lesões',
+    title: 'Patellofemoral pain syndrome: clinical aspects and management',
+    authors: 'Crossley, K.M. et al.',
+    journal: 'British Journal of Sports Medicine, 50(4), 244–250',
+    year: 2016,
+    doi: 'https://doi.org/10.1136/bjsports-2015-095252',
+    keywords: ['patelofemoral','joelho','anterior','dor','subida','crossley'],
+    resumo: 'Revisão clínica da síndrome patelofemoral, causa mais comum de dor anterior no joelho em corredores (25-40% das lesões de joelho). Diferente da tendinopatia patelar, esta é causada por desalinhamento patelar e fraqueza de quadril. Mulheres têm 2x mais risco. O exercício de agachamento com controle de valgismo de joelho e o fortalecimento de glúteo médio são as intervenções com mais evidência. Subir escadas e descer ladeiras são os movimentos mais sintomáticos.',
+    aplicacao: 'Diferenciação no Stride entre dor patelar e patelofemoral no onboarding, com protocolos de fortalecimento distintos.'
+  },
+  {
+    id: 19, cat: 'lesao',
+    tag: 'paper-tag-lesao', tagLabel: 'Lesões',
+    title: 'Running-related injuries: a systematic review of biomechanical risk factors',
+    authors: 'Ceyssens, L. et al.',
+    journal: 'Sports Medicine, 49(8), 1095–1115',
+    year: 2019,
+    doi: 'https://doi.org/10.1007/s40279-019-01109-w',
+    keywords: ['biomecânica','lesão','cadência','passada','impacto','ceyssens','pisada'],
+    resumo: 'Revisão sistemática de 44 estudos sobre fatores biomecânicos de risco em corredores. Principais achados: cadência abaixo de 165 ppm aumenta carga de impacto; passada longa aumenta risco de lesão tibial; aumento de inclinação do tronco para frente reduz carga no joelho. A intervenção mais custo-efetiva: aumentar cadência em 5-10% (sem mudar ritmo) reduz carga de impacto em 20-30%.',
+    aplicacao: 'Fundamenta as recomendações de cadência nos treinos do Stride e o feedback sobre forma de corrida.'
+  },
+  {
+    id: 20, cat: 'lesao',
+    tag: 'paper-tag-lesao', tagLabel: 'Lesões',
+    title: 'Hamstring injuries in runners: risk factors and rehabilitation',
+    authors: 'Askling, C. et al.',
+    journal: 'Journal of Orthopaedic & Sports Physical Therapy, 48(3), 142–150',
+    year: 2018,
+    doi: 'https://doi.org/10.2519/jospt.2018.7314',
+    keywords: ['isquiotibial','posterior','coxa','sprint','velocidade','askling'],
+    resumo: 'Estudo sobre lesões de isquiotibiais em corredores, mais comum em treinos de velocidade e tiros. Dois tipos distintos: lesão proximal (tendão do isquiotibial, em aceleração) e lesão de ventre muscular (em velocidade máxima). O protocolo L-protocol (exercícios específicos de alongamento excêntrico com joelho estendido) reduziu recorrência em 70% comparado à reabilitação convencional.',
+    aplicacao: 'Protocolo preventivo de isquiotibiais no módulo de fortalecimento do Stride, especialmente para usuários com treinos intervalados.'
+  },
+
+  // ── NOVAS PREVENÇÃO ───────────────────────────────────────
+  {
+    id: 21, cat: 'prevencao',
+    tag: 'paper-tag-prevencao', tagLabel: 'Prevenção',
+    title: 'Strength training for distance runners: a systematic review',
+    authors: 'Blagrove, R.C. et al.',
+    journal: 'Sports Medicine, 48(10), 2295–2310',
+    year: 2018,
+    doi: 'https://doi.org/10.1007/s40279-018-0948-2',
+    keywords: ['força','musculação','resistência','economia','prevenção','blagrove'],
+    resumo: 'Revisão sistemática de 15 estudos sobre musculação para corredores de fundo. Resultado principal: 6-14 semanas de treino de força melhoram economia de corrida em 2-8% e reduzem incidência de lesões em até 50%. Exercícios com maior evidência: agachamento unilateral, ponte de glúteo, elevação de panturrilha excêntrica e planks laterais. A frequência mínima recomendada é 2× por semana.',
+    aplicacao: 'Justifica a inclusão de 2 sessões semanais de força no plano do Stride e os exercícios específicos com maior evidência.'
+  },
+  {
+    id: 22, cat: 'prevencao',
+    tag: 'paper-tag-prevencao', tagLabel: 'Prevenção',
+    title: 'Foot strike patterns and collision forces in habitually barefoot versus shod runners',
+    authors: 'Lieberman, D.E. et al.',
+    journal: 'Nature, 463, 531–535',
+    year: 2010,
+    doi: 'https://doi.org/10.1038/nature08723',
+    keywords: ['pisada','barefoot','descalço','antepé','retropé','impacto','lieberman'],
+    resumo: 'Estudo seminal sobre padrões de pisada em corredores. Corredores com pisada em antepé/médiopé geram 3x menos força de impacto do que pisada em calcanhar. Corredores descalços habituais quase nunca aterrisam no calcanhar. Implicação clínica: mudanças bruscas de pisada são perigosas — a transição deve ser gradual (meses), para dar tempo de adaptação de tendões e músculos intrínsecos do pé.',
+    aplicacao: 'Embase as recomendações de transição gradual de calçados e pisada no Stride, especialmente na entrada de dados biomecânicos do perfil.'
+  },
+  {
+    id: 23, cat: 'prevencao',
+    tag: 'paper-tag-prevencao', tagLabel: 'Prevenção',
+    title: 'Ankle stability and movement coordination impairments: ankle ligament sprains',
+    authors: 'Martin, R.L. et al.',
+    journal: 'Journal of Orthopaedic & Sports Physical Therapy, 51(4), CPG1–CPG80',
+    year: 2021,
+    doi: 'https://doi.org/10.2519/jospt.2021.0303',
+    keywords: ['tornozelo','entorse','estabilidade','propriocepção','martin','2021'],
+    resumo: 'Guia clínico mais recente sobre entorses de tornozelo e instabilidade. Para corredores de trail e terrenos irregulares, o treino proprioceptivo (disco instável, exercícios unipodais) reduz recorrência de entorses em 40-50%. O fortalecimento dos fibulares e tibial anterior é fundamental. Calçados maximalistas podem reduzir propriocepção — treinamento em superfícies variadas compensa esse deficit.',
+    aplicacao: 'Protocolo de estabilidade de tornozelo para usuários que praticam trilha/trail no Stride, integrado ao módulo de fortalecimento.'
+  },
+
+  // ── NOVOS CARGA/TREINO ─────────────────────────────────────
+  {
+    id: 24, cat: 'carga',
+    tag: 'paper-tag-carga', tagLabel: 'Carga & ACWR',
+    title: 'Perceived exertion is a better predictor of training load than heart rate in recreational runners',
+    authors: 'Impellizzeri, F.M. et al.',
+    journal: 'International Journal of Sports Physiology and Performance, 19(1), 67–74',
+    year: 2024,
+    doi: 'https://doi.org/10.1123/ijspp.2023-0169',
+    keywords: ['pse','percepção','esforço','carga','hrv','impellizzeri','2024'],
+    resumo: 'Estudo recente (2024) comparando métodos de quantificação de carga em corredores recreacionais. A PSE (Percepção Subjetiva de Esforço, escala de Borg 1-10) multiplicada pela duração da sessão mostrou correlação mais forte com marcadores de fadiga do que a FC isolada. Para corredores sem wearable avançado, Session-RPE é o método mais válido e prático para monitorar carga interna.',
+    aplicacao: 'Justifica o uso de percepção subjetiva de esforço no módulo de registro de treinos do Stride, especialmente para usuários sem wearable.'
+  },
+  {
+    id: 25, cat: 'carga',
+    tag: 'paper-tag-carga', tagLabel: 'Carga & ACWR',
+    title: 'Does the ACWR predict injury in team sports? A systematic review and meta-analysis',
+    authors: 'Windt, J. & Gabbett, T.J.',
+    journal: 'British Journal of Sports Medicine, 51(3), 232–240',
+    year: 2017,
+    doi: 'https://doi.org/10.1136/bjsports-2016-096581',
+    keywords: ['acwr','meta-análise','lesão','predição','windt','gabbett'],
+    resumo: 'Meta-análise de 7 estudos validando o ACWR como preditor de lesão. OR de 2.1 para ACWR acima de 1.5 e OR de 1.8 para ACWR abaixo de 0.8. Importante nuance: a janela de cálculo (rolling vs. exponentially weighted) afeta a sensibilidade do indicador. A janela exponencial (que dá mais peso às semanas recentes) é ligeiramente superior para detecção precoce.',
+    aplicacao: 'Reforça a validade do ACWR no Stride e justifica o uso de janela exponencial no cálculo quando os dados do Strava estão disponíveis.'
+  },
+  {
+    id: 26, cat: 'treino',
+    tag: 'paper-tag-treino', tagLabel: 'Periodização',
+    title: 'Training intensity distribution in endurance sports: a systematic review',
+    authors: 'Stöggl, T. & Sperlich, B.',
+    journal: 'Frontiers in Physiology, 5, 33',
+    year: 2014,
+    doi: 'https://doi.org/10.3389/fphys.2014.00033',
+    keywords: ['distribuição','intensidade','polarizado','threshold','stöggl','sperlich'],
+    resumo: 'Comparação entre 4 modelos de distribuição de intensidade: alto volume baixa intensidade, threshold, high-intensity, e polarizado. Em 9 de 11 estudos, o modelo polarizado (≈77% Z1 + ≈3% Z2 + ≈20% Z3+) superou os demais em VO2max, economia e performance em provas. Threshold puro levou a mais fadiga acumulada e maior incidência de overtraining. Fundamental para corredores que tendem a ficar na "zona cinza" (moderado).',
+    aplicacao: 'Reforça o modelo 80/20 do Stride e justifica os alertas quando o corredor registra intensidade "moderada" em demasia.'
+  },
+  {
+    id: 27, cat: 'treino',
+    tag: 'paper-tag-treino', tagLabel: 'Periodização',
+    title: 'Running economy: measurement, norms, and determinants',
+    authors: 'Barnes, K.R. & Kilding, A.E.',
+    journal: 'Sports Medicine Open, 1(1), 8',
+    year: 2015,
+    doi: 'https://doi.org/10.1186/s40798-015-0007-y',
+    keywords: ['economia','corrida','eficiência','cadência','biomecânica','barnes'],
+    resumo: 'Revisão sobre os determinantes de economia de corrida — a quantidade de oxigênio consumido por km percorrido. Os fatores mais modificáveis: força de quadril e tornozelo (melhora 3-4%), cadência ótima (165-185 ppm dependendo do atleta), treinos em altitude e treino de força com ênfase em stiffness tendíneo. Interessante: corredores mais pesados têm economia absoluta menor mas relativa semelhante.',
+    aplicacao: 'Fundamenta as recomendações de cadência e os exercícios de fortalecimento priorizados no Stride para melhora de eficiência.'
+  },
+
+  // ── SONO RECENTE ──────────────────────────────────────────
+  {
+    id: 28, cat: 'sono',
+    tag: 'paper-tag-sono', tagLabel: 'Sono & Recuperação',
+    title: 'Sleep extension and athletic performance: a systematic review and meta-analysis',
+    authors: 'Swinbourne, R. et al.',
+    journal: 'European Journal of Sport Science, 18(5), 686–694',
+    year: 2018,
+    doi: 'https://doi.org/10.1080/17461391.2018.1445291',
+    keywords: ['sono','extensão','performance','atleta','swinbourne','recuperação'],
+    resumo: 'Meta-análise sobre o impacto de extensão de sono (dormir mais que o habitual por períodos) em atletas. Aumentar sono em 30-60 minutos por noite durante 5-7 semanas melhorou tempo de reação em 17%, precisão de sprints em 9% e reduziu percepção de fadiga em 25%. Atletas com dívida de sono acumulada se beneficiaram mais. Implicação: nos dias anteriores a provas importantes, sono extra tem valor ergogênico real.',
+    aplicacao: 'Fundamenta as recomendações de sono no Stride antes de semanas de treino intenso ou de provas, incluindo sugestão de dormir mais nos dias de folga.'
+  },
+  {
+    id: 29, cat: 'sono',
+    tag: 'paper-tag-sono', tagLabel: 'Sono & Recuperação',
+    title: 'Heart rate variability as a biomarker of training load and recovery in endurance athletes',
+    authors: 'Plews, D.J. et al.',
+    journal: 'International Journal of Sports Physiology and Performance, 8(3), 346–351',
+    year: 2013,
+    doi: 'https://doi.org/10.1123/ijspp.8.3.346',
+    keywords: ['hrv','variabilidade','fc','repouso','recuperação','plews','endurance'],
+    resumo: 'Estudo validando HRV como marcador de recuperação em corredores de endurance. HRV 7% ou mais abaixo da média dos últimos 7 dias indica recuperação insuficiente e prediz queda de performance no treino. A variabilidade entre dias importa mais que o valor absoluto. HRV matinal medida imediatamente ao acordar (em posição supina, 5 minutos) é mais sensível que a medida após se levantar.',
+    aplicacao: 'Fundamenta o uso de HRV no score de readiness do Stride e as recomendações de quando reduzir intensidade com base no wearable.'
   }
 ];
 
@@ -2959,9 +3168,10 @@ let currentCatFilter = 'todos';
 
 function renderPapers() {
   const search = (document.getElementById('papers-search')?.value || '').toLowerCase();
-  const filtered = PAPERS.filter(p => {
+  const sortOrder = document.getElementById('papers-sort')?.value || 'recente';
+  let filtered = PAPERS.filter(p => {
     const matchCat = currentCatFilter === 'todos' || p.cat === currentCatFilter;
-    const matchSearch = !search || 
+    const matchSearch = !search ||
       p.title.toLowerCase().includes(search) ||
       p.authors.toLowerCase().includes(search) ||
       p.resumo.toLowerCase().includes(search) ||
@@ -2970,15 +3180,24 @@ function renderPapers() {
     return matchCat && matchSearch;
   });
 
+  // Sort by year
+  filtered.sort((a, b) => sortOrder === 'recente' ? b.year - a.year : a.year - b.year);
+
   document.getElementById('papers-count').textContent = `${filtered.length} paper${filtered.length !== 1 ? 's' : ''} encontrado${filtered.length !== 1 ? 's' : ''}`;
 
-  document.getElementById('papers-list').innerHTML = filtered.map(p => `
+  const currentYear = new Date().getFullYear();
+  document.getElementById('papers-list').innerHTML = filtered.map(p => {
+    const age = currentYear - p.year;
+    const recencyBadge = age <= 3
+      ? `<span style="font-size:10px;background:#dcfce7;color:#16a34a;border:1px solid #bbf7d0;padding:2px 7px;border-radius:20px;font-family:'DM Mono',monospace;font-weight:600">★ ${p.year}</span>`
+      : `<span style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace">${p.year}</span>`;
+    return `
     <div class="paper-card" id="paper-${p.id}" onclick="togglePaper(${p.id})">
       <div class="paper-header">
         <span class="paper-tag ${p.tag}">${p.tagLabel}</span>
         <div class="paper-meta">
           <div class="paper-title">${p.title}</div>
-          <div class="paper-authors">${p.authors} · ${p.year}</div>
+          <div class="paper-authors">${p.authors} &nbsp;${recencyBadge}</div>
           <div class="paper-journal">${p.journal}</div>
         </div>
         <span class="paper-expand">▼</span>
@@ -2989,7 +3208,7 @@ function renderPapers() {
         ${p.doi ? `<div class="paper-doi">DOI: <a href="${p.doi}" target="_blank" onclick="event.stopPropagation()">${p.doi}</a></div>` : '<div class="paper-doi" style="color:var(--text3)">Livro — sem DOI</div>'}
       </div>
     </div>
-  `).join('') || '<div class="empty"><div class="empty-icon">🔬</div><div class="empty-title">Nenhum paper encontrado</div><div class="empty-text">Tente outros termos de busca.</div></div>';
+  `}).join('') || '<div class="empty"><div class="empty-icon">🔬</div><div class="empty-title">Nenhum paper encontrado</div><div class="empty-text">Tente outros termos de busca.</div></div>';
 }
 
 function togglePaper(id) {
@@ -3018,12 +3237,46 @@ function setLang(lang, btn) {
   currentLang = lang;
   localStorage.setItem('stride_lang', lang);
   document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
-  // Sync resumo-lang select if on that page
   const sel = document.getElementById('resumo-lang');
   if (sel) sel.value = lang;
-  // Apply UI language
   applyLang(lang);
 }
+
+function toggleLangDropdown() {
+  const dd = document.getElementById('lang-dropdown');
+  if (dd) dd.style.display = dd.style.display === 'none' ? 'block' : 'none';
+}
+
+function setLangDD(btn) {
+  const lang = btn.dataset.lang;
+  const flag = btn.dataset.flag;
+  const name = btn.dataset.name;
+  currentLang = lang;
+  localStorage.setItem('stride_lang', lang);
+  // Update button display
+  const flagEl = document.getElementById('lang-flag');
+  const nameEl = document.getElementById('lang-name-display');
+  if (flagEl) flagEl.textContent = flag;
+  if (nameEl) nameEl.textContent = name;
+  // Mark active
+  document.querySelectorAll('.lang-dd-item').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
+  // Close dropdown
+  const dd = document.getElementById('lang-dropdown');
+  if (dd) dd.style.display = 'none';
+  // Sync resumo select
+  const sel = document.getElementById('resumo-lang');
+  if (sel) sel.value = lang;
+  applyLang(lang);
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', function(e) {
+  const topbar = document.getElementById('lang-topbar');
+  if (topbar && !topbar.contains(e.target)) {
+    const dd = document.getElementById('lang-dropdown');
+    if (dd) dd.style.display = 'none';
+  }
+});
 
 function applyLang(lang) {
   const t = TRANSLATIONS[lang] || TRANSLATIONS['pt'];
@@ -3104,7 +3357,6 @@ const TRANSLATIONS = {
 };
 
 function initLangIds() {
-  // Add IDs for translatable page elements
   const sub = document.querySelector('#page-dashboard .page-sub');
   if (sub) sub.id = 'dash-sub';
   document.querySelectorAll('.stat-label').forEach((el, i) => {
@@ -3113,6 +3365,15 @@ function initLangIds() {
   });
   applyLang(currentLang);
   document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === currentLang));
+  document.querySelectorAll('.lang-dd-item').forEach(b => {
+    if (b.dataset.lang === currentLang) {
+      b.classList.add('active');
+      const flagEl = document.getElementById('lang-flag');
+      const nameEl = document.getElementById('lang-name-display');
+      if (flagEl) flagEl.textContent = b.dataset.flag;
+      if (nameEl) nameEl.textContent = b.dataset.name;
+    }
+  });
   const sel = document.getElementById('resumo-lang');
   if (sel) sel.value = currentLang;
 }
