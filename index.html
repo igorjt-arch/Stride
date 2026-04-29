@@ -78,6 +78,9 @@ body {
   position: fixed;
   height: 100vh;
   overflow-y: auto;
+  z-index: 10;
+  left: 0;
+  top: 0;
 }
 
 .main {
@@ -482,7 +485,7 @@ input[type="range"] {
 /* PROFILE SELECTOR */
 .profiles-screen {
   position: fixed; inset: 0; background: var(--bg);
-  display: flex; flex-direction: column; align-items: center;
+  flex-direction: column; align-items: center;
   justify-content: center; z-index: 1000; padding: 24px;
 }
 .profiles-logo {
@@ -3853,15 +3856,33 @@ async function doRegister() {
   const password = document.getElementById('reg-password').value;
   if (!name || !email || !password) { showLoginError('Preencha todos os campos.'); return; }
   if (password.length < 6) { showLoginError('Senha deve ter no mínimo 6 caracteres.'); return; }
+
+  // Show loading
+  const btn = document.querySelector('#form-register button[onclick="doRegister()"]');
+  if (btn) { btn.textContent = 'Criando conta...'; btn.disabled = true; }
+
   try {
-    const { createUserWithEmailAndPassword, doc, setDoc } = window._fbFns;
+    const { createUserWithEmailAndPassword } = window._fbFns;
     const cred = await createUserWithEmailAndPassword(window._fbAuth, email, password);
-    await setDoc(doc(window._fbDb, 'users', cred.user.uid), {
-      email, name, role: 'athlete', createdAt: new Date().toISOString()
-    });
+    const uid = cred.user.uid;
+
+    const userData = { email, name, role: 'athlete', createdAt: new Date().toISOString() };
+
+    // Save to localStorage immediately
+    localStorage.setItem('stride_fb_' + uid, JSON.stringify(userData));
+
+    // Save to Firestore in background
+    saveUserDataToFirestore(uid, userData).catch(e => console.warn('Firestore save:', e));
+
+    // onAuthStateChanged will handle navigation
   } catch(e) {
-    const msgs = { 'auth/email-already-in-use':'Este email já está cadastrado.','auth/invalid-email':'Email inválido.','auth/weak-password':'Senha muito fraca.' };
+    const msgs = {
+      'auth/email-already-in-use': 'Este email já está cadastrado.',
+      'auth/invalid-email': 'Email inválido.',
+      'auth/weak-password': 'Senha muito fraca (mín. 6 caracteres).'
+    };
     showLoginError(msgs[e.code] || e.message);
+    if (btn) { btn.textContent = 'Criar conta'; btn.disabled = false; }
   }
 }
 
@@ -3888,13 +3909,14 @@ async function doLogout() {
 // Load user data from Firestore
 // Save to Firestore + localStorage cache
 async function saveUserDataToFirestore(uid, data) {
+  // Always save to localStorage first (instant, never fails)
   try { localStorage.setItem('stride_fb_' + uid, JSON.stringify(data)); } catch(e) {}
+  // Try Firestore
   try {
     const { doc, setDoc } = window._fbFns;
     await setDoc(doc(window._fbDb, 'users', uid), data, { merge: true });
-    console.log('Firestore save OK');
   } catch(e) {
-    console.warn('Firestore save failed (cached locally):', e.message);
+    console.warn('Firestore save failed (data safe in localStorage):', e.code, e.message);
   }
 }
 
