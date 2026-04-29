@@ -694,7 +694,7 @@ input[type="range"] {
 <body>
 
 <!-- LOADING SCREEN -->
-<div id="loading-screen" style="position:fixed;inset:0;background:#f0f4f8;z-index:3000;display:none;flex-direction:column;align-items:center;justify-content:center">
+<div id="loading-screen" style="position:fixed;inset:0;background:#f0f4f8;z-index:3000;display:none;flex-direction:column;align-items:center;justify-content:center;pointer-events:none">
   <div style="font-family:'DM Serif Display',serif;font-size:40px;color:#1a2332;letter-spacing:-1px;margin-bottom:8px">Stride</div>
   <div style="font-size:12px;color:#8a9ab0;font-family:'DM Mono',monospace;margin-bottom:32px">corrida com ciência</div>
   <div style="display:flex;gap:6px">
@@ -3797,6 +3797,8 @@ function showLoginScreen() {
 function hideLoginScreen() {
   document.getElementById('loading-screen').style.display = 'none';
   document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('main-app').style.display = 'flex';
+  document.getElementById('main-app').style.pointerEvents = 'auto';
 }
 
 function showLoginTab(tab) {
