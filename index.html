@@ -3652,7 +3652,14 @@ const DB = {
 // Single saveCurrentProfile — saves to Firestore
 function saveCurrentProfile() {
   if (!currentUser || !state.perfil) return;
+  // Merge with existing cached data to preserve role and other fields
+  let existing = {};
+  try {
+    const cached = localStorage.getItem('stride_fb_' + currentUser.uid);
+    if (cached) existing = JSON.parse(cached);
+  } catch(e) {}
   const data = {
+    ...existing,
     perfil: state.perfil,
     plano: state.plano,
     semana: state.semana,
@@ -4288,6 +4295,17 @@ function initFirebase() {
     }
 
     // Load athlete profile
+    // If userData doesn't have perfil, check localStorage directly (may have been saved separately)
+    if (!userData?.perfil) {
+      try {
+        const cached = localStorage.getItem('stride_fb_' + user.uid);
+        if (cached) {
+          const cachedData = JSON.parse(cached);
+          if (cachedData?.perfil) userData = { ...userData, ...cachedData };
+        }
+      } catch(e) {}
+    }
+
     if (userData?.perfil) {
       state.perfil = userData.perfil;
       state.plano = userData.plano || null;
